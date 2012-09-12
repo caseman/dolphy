@@ -102,7 +102,7 @@ dolphyTest('#mixed literals', 'Layout', function(Layout) {
 
 suite('handler');
 
-dolphyTest('#custom handler', 'Layout', function(Layout) {
+dolphyTest('#custom handler function', 'Layout', function(Layout) {
   Layout.addHandler(function mrAwesomeHandler(node, compiler) {
     if (node.mrAwesomeHandler) {
       compiler.pushLiteral('Awesome');
@@ -116,10 +116,33 @@ dolphyTest('#custom handler', 'Layout', function(Layout) {
   assert.strictEqual(L(), 'Awesome\nless awesome');
 });
 
+dolphyTest('#multiple custom handlers', 'Layout', function(Layout) {
+  Layout.addHandler({
+    $testFooThingy: function(node, compiler) {
+      compiler.pushLiteral('foo');
+    },
+    $testBarThingy: function(node, compiler) {
+      compiler.pushLiteral('BAR');
+    }
+  });
+  var L = Layout(
+    [{$testFooThingy: true}, {$testBarThingy: true}]
+  );
+  assert.strictEqual(L(), 'foo\nBAR');
+});
+
 dolphyTest('#unhandled node', 'Layout', function(Layout) {
   assert.throws(Layout, {$someUnknownThingy: 'hey'});
 });
+
 dolphyTest('#empty node', 'Layout', function(Layout) {
   assert.throws(Layout, {});
 });
+
+suite('tag handler');
+
+dolphyTest('#basic tag', 'Layout', function(Layout) {
+  assert.throws(Layout, {});
+});
+
 

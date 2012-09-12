@@ -88,11 +88,22 @@ define(function() {
 
   Layout.handlers = {};
   Layout.handlerOrder = [];
-  Layout.addHandler = function(handlerFunc) {
-    if (!(handlerFunc.name in Layout.handlers)) {
-      Layout.handlerOrder.push(handlerFunc.name);
+
+  function addHandler(name, func) {
+    if (!(name in Layout.handlers)) {
+      Layout.handlerOrder.push(name);
     }
-    Layout.handlers[handlerFunc.name] = handlerFunc;
+    Layout.handlers[name] = func;
+  }
+
+  Layout.addHandler = function(handler) {
+    if (typeof handler === 'function') {
+      addHandler(handler.name, handler);
+    } else {
+      for (var name in handler) {
+        addHandler(name, handler[name]);
+      }
+    }
   }
 
   Layout.addHandler(function tag(node, compiler) {
