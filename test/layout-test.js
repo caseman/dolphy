@@ -22,7 +22,6 @@ dolphyTest('#Constructor func', 'Layout', function(Layout) {
 
 dolphyTest('#Returns function', 'Layout', function(Layout) {
   assert.isFunction(Layout([]));
-  assert.isFunction(Layout({}));
 });
 
 suite('invalid layouts');
@@ -43,11 +42,6 @@ suite('render empty layouts');
 
 dolphyTest('#Empty array', 'Layout', function(Layout) {
   var L = Layout([]);
-  assert.strictEqual(L(), '');
-});
-
-dolphyTest('#Empty object', 'Layout', function(Layout) {
-  var L = Layout({});
   assert.strictEqual(L(), '');
 });
 
@@ -105,3 +99,27 @@ dolphyTest('#mixed literals', 'Layout', function(Layout) {
   var L = Layout(['A string', 420, o]);
   assert.strictEqual(L(), 'A string\n420\nan Object');
 });
+
+suite('handler');
+
+dolphyTest('#custom handler', 'Layout', function(Layout) {
+  Layout.addHandler(function mrAwesomeHandler(node, compiler) {
+    if (node.mrAwesomeHandler) {
+      compiler.pushLiteral('Awesome');
+    } else {
+      compiler.pushLiteral('less awesome');
+    }
+  });
+  var L = Layout(
+    [{mrAwesomeHandler: true}, {mrAwesomeHandler: false}]
+  );
+  assert.strictEqual(L(), 'Awesome\nless awesome');
+});
+
+dolphyTest('#unhandled node', 'Layout', function(Layout) {
+  assert.throws(Layout, {$someUnknownThingy: 'hey'});
+});
+dolphyTest('#empty node', 'Layout', function(Layout) {
+  assert.throws(Layout, {});
+});
+

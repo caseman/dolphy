@@ -40,12 +40,12 @@ define(function() {
       compiled.push(o);
     }
 
-    var compile = this.compile = function(node) {
-      var len, i, name, handlers;
+    this.compile = function(node) {
+      var len, i, name;
       if (isArray(node)) {
         len = node.length;
         for (i = 0; i < len; i++) { 
-          compile(node[i]);
+          this.compile(node[i]);
         }
       } else if (isObject(node)) {
         for (i = 0; i < handlerCount; i++) {
@@ -55,8 +55,12 @@ define(function() {
             break;
           }
         }
-        if (!(name in node) && node.toString !== _objToString) {
-          pushLiteral(node);
+        if (!(name in node)) {
+          if (node.toString !== _objToString) {
+            pushLiteral(node);
+          } else {
+            throw new Error('No handler for ' + JSON.stringify(node));
+          }
         }
       } else {
         pushLiteral(node);
@@ -64,7 +68,7 @@ define(function() {
     }
 
     if (isArray(definition) || isObject(definition)) {
-      compile(definition);
+      this.compile(definition);
       closeLiterals();
       if (compiled.length === 1) {
         src = 'return ' + compiled;
@@ -85,7 +89,7 @@ define(function() {
   Layout.handlers = {};
   Layout.handlerOrder = [];
   Layout.addHandler = function(handlerFunc) {
-    if (!handlerFunc.name in Layout.handlers) {
+    if (!(handlerFunc.name in Layout.handlers)) {
       Layout.handlerOrder.push(handlerFunc.name);
     }
     Layout.handlers[handlerFunc.name] = handlerFunc;
