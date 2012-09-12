@@ -1,18 +1,20 @@
 define(function() {
   var 
     isArray = Array.isArray,
-    _objToString = Object.prototype.toString,
-    handler = {};
+    _objToString = Object.prototype.toString;
 
   function isObject(obj) {
     return _objToString.call(obj) === '[object Object]';
   };
 
-  return function Layout(definition) {
+  function Compiler(definition) {
     var 
       src,
       compiled = [],
-      literals = '';
+      literals = '',
+      handlers = Layout.handlers,
+      handlerOrder = Layout.handlerOrder,
+      handlerCount = Layout.handlerOrder.length;
 
     function closeLiterals() {
       if (literals) {
@@ -25,7 +27,7 @@ define(function() {
       }
     }
 
-    function pushLiteral(s) {
+    var pushLiteral = this.pushLiteral = function(s) {
       if (literals) {
         literals += '\n' + s;
       } else {
@@ -33,29 +35,36 @@ define(function() {
       }
     }
 
-    function push(o) {
+    var push = this.push = function(o) {
       closeLiterals();
       compiled.push(o);
     }
 
-    function compileNode(def) {
-      var compiled, reduced, working, len;
-      if (isArray(def)) {
-        len = def.length;
-        for (var i = 0; i < len; i++) { 
-          compileNode(def[i]);
+    var compile = this.compile = function(node) {
+      var len, i, name, handlers;
+      if (isArray(node)) {
+        len = node.length;
+        for (i = 0; i < len; i++) { 
+          compile(node[i]);
         }
-      } else if (isObject(def)) {
-        if (def.toString !== _objToString) {
-          pushLiteral(def);
+      } else if (isObject(node)) {
+        for (i = 0; i < handlerCount; i++) {
+          name = handlerOrder[i];
+          if (name in node) {
+            handlers[name](node, this);
+            break;
+          }
+        }
+        if (!(name in node) && node.toString !== _objToString) {
+          pushLiteral(node);
         }
       } else {
-        pushLiteral(def);
+        pushLiteral(node);
       }
     }
 
     if (isArray(definition) || isObject(definition)) {
-      compileNode(definition);
+      compile(definition);
       closeLiterals();
       if (compiled.length === 1) {
         src = 'return ' + compiled;
@@ -68,4 +77,23 @@ define(function() {
       throw new Error('Layout definition must be an Array or plain Object');
     }
   }
+
+  function Layout(definition) {
+    return new Compiler(definition);
+  }
+
+  Layout.handlers = {};
+  Layout.handlerOrder = [];
+  Layout.addHandler = function(handlerFunc) {
+    if (!handlerFunc.name in Layout.handlers) {
+      Layout.handlerOrder.push(handlerFunc.name);
+    }
+    Layout.handlers[handlerFunc.name] = handlerFunc;
+  }
+
+  Layout.addHandler(function tag(node, compiler) {
+    
+  });
+
+  return Layout;
 });
