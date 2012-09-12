@@ -8,35 +8,11 @@ define(function() {
     return _objToString.call(obj) === '[object Object]';
   };
 
-  function compile(def, pushLiteral, push) {
-    var compiled, reduced, working, len;
-    if (isArray(def)) {
-      len = def.length;
-      for (var i = 0; i < len; i++) { 
-        compile(def[i], pushLiteral, push);
-      }
-    } else if (isObject(def)) {
-      if (def.toString !== _objToString) {
-        pushLiteral(def);
-      }
-    } else {
-      pushLiteral(def);
-    }
-  }
-
   return function Layout(definition) {
     var 
-      compiled = [], 
-      literals = '',
-      src;
-
-    function pushLiteral(s) {
-      if (literals) {
-        literals += '\n' + s;
-      } else {
-        literals = s + '';
-      }
-    }
+      src,
+      compiled = [],
+      literals = '';
 
     function closeLiterals() {
       if (literals) {
@@ -49,13 +25,37 @@ define(function() {
       }
     }
 
+    function pushLiteral(s) {
+      if (literals) {
+        literals += '\n' + s;
+      } else {
+        literals = s + '';
+      }
+    }
+
     function push(o) {
       closeLiterals();
       compiled.push(o);
     }
 
+    function compileNode(def) {
+      var compiled, reduced, working, len;
+      if (isArray(def)) {
+        len = def.length;
+        for (var i = 0; i < len; i++) { 
+          compileNode(def[i]);
+        }
+      } else if (isObject(def)) {
+        if (def.toString !== _objToString) {
+          pushLiteral(def);
+        }
+      } else {
+        pushLiteral(def);
+      }
+    }
+
     if (isArray(definition) || isObject(definition)) {
-      compile(definition, pushLiteral, push);
+      compileNode(definition);
       closeLiterals();
       if (compiled.length === 1) {
         src = 'return ' + compiled;
