@@ -1,0 +1,26 @@
+{
+    "name": "dolphy"
+  , "version": "0.0.0"
+  , "description": "Avant-garde web apps"
+  , "author": "Casey Duncan <apres.project@gmail.com>"
+  , "contributors": []
+  , "repository": {
+    "type": "git",
+    "url": "https://github.com/caseman/dolphy"
+  }
+  , "license": "MIT"
+  , "keywords": [
+    "webdev", "app", "webapp", "browser"
+  ]
+  , "dependencies": {
+  }
+  , "devDependencies": {
+    "requirejs": "2.0.x",
+    "mocha": "1.4.x",
+    "chai": "1.2.x"
+  }
+  , "scripts": {
+      "dtest": "./node_modules/.bin/mocha --reporter spec --no-colors --ui qunit --debug-brk",
+      "test": "./node_modules/.bin/mocha --reporter spec --no-colors --ui qunit"
+  }
+}
