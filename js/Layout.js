@@ -14,6 +14,7 @@ define(function() {
       separator = '\n',
       contextStack = [{context: context, separator: separator}],
       literals = '',
+      firstLiteral = true,
       handlers = Layout.handlers,
       handlerOrder = Layout.handlerOrder,
       handlerCount = Layout.handlerOrder.length;
@@ -26,18 +27,19 @@ define(function() {
                   .replace(/"/g, '\\"')
           + '"');
         literals = '';
+        firstLiteral = true;
       }
     }
 
     this.pushContext = function(separatorChar) {
-      closeLiterals();
       context = [];
       separator = separatorChar || '';
       contextStack.push({context: context, separator: separator});
+      firstLiteral = true;
     }
 
     this.popContext = function() {
-      closeLiterals();
+      if (context.length) closeLiterals();
       var 
         old = contextStack.pop(),
         top = contextStack[contextStack.length - 1];
@@ -55,10 +57,11 @@ define(function() {
     }
 
     var pushLiteral = this.pushLiteral = function(s) {
-      if (literals) {
-        literals += separator + s;
+      if (firstLiteral) {
+        literals += s;
+        firstLiteral = false;
       } else {
-        literals = s + '';
+        literals += separator + s;
       }
     }
 
@@ -112,6 +115,7 @@ define(function() {
       } else {
         src = 'return [\n' + context.join(',\n') + '].join("\\n");';
       }
+      // console.log(src);
     } else {
       throw new Error('Layout definition must be an Array or plain Object');
     }
