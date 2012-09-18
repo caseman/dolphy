@@ -141,8 +141,39 @@ dolphyTest('#empty node', 'Layout', function(Layout) {
 
 suite('tag handler');
 
-dolphyTest('#basic tag', 'Layout', function(Layout) {
-  assert.throws(Layout, {});
+dolphyTest('#basic tag', 'Layout', function(Layout) {      
+  var L = Layout({tag: 'div'});
+  assert.strictEqual(L(), '<div>\n</div>');
+});
+
+dolphyTest('#self closing tag', 'Layout', function(Layout) {
+  var L = Layout({tag: 'br'});
+  assert.strictEqual(L(), '<br>');
+});
+
+dolphyTest('#tag id', 'Layout', function(Layout) {
+  var L = Layout({tag: 'div', id:'alto'});
+  assert.strictEqual(L(), '<div id="alto">\n</div>');
+});
+
+dolphyTest('#tag id escape', 'Layout', function(Layout) {
+  var L = Layout({tag: 'div', id:'"<foo'});
+  assert.strictEqual(L(), '<div id="&quot;&lt;foo">\n</div>');
+});
+
+dolphyTest('#tag single class', 'Layout', function(Layout) {
+  var L = Layout({tag: 'div', cls:'beard'});
+  assert.strictEqual(L(), '<div class="beard">\n</div>');
+});
+
+dolphyTest('#tag class escape', 'Layout', function(Layout) {
+  var L = Layout({tag: 'div', cls:'<&foo'});
+  assert.strictEqual(L(), '<div class="&lt;&amp;foo">\n</div>');
+});
+
+dolphyTest('#tag multiple class', 'Layout', function(Layout) {
+  var L = Layout({tag: 'div', cls:['hat', 'beard', 'keys']});
+  assert.strictEqual(L(), '<div class="hat beard keys">\n</div>');
 });
 
 

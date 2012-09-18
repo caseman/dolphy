@@ -10,7 +10,9 @@ define(function() {
   function Compiler(definition) {
     var 
       src,
-      compiled = [],
+      context = [],
+      separator = '\n',
+      contextStack = [{context: context, separator: separator}],
       literals = '',
       handlers = Layout.handlers,
       handlerOrder = Layout.handlerOrder,
@@ -18,7 +20,7 @@ define(function() {
 
     function closeLiterals() {
       if (literals) {
-        compiled.push('"' + 
+        context.push('"' + 
           literals.replace(/\\/g, '\\\\')
                   .replace(/\n/g, '\\n')
                   .replace(/"/g, '\\"')
@@ -27,9 +29,34 @@ define(function() {
       }
     }
 
+    this.pushContext = function(separatorChar) {
+      closeLiterals();
+      context = [];
+      separator = separatorChar || '';
+      contextStack.push({context: context, separator: separator});
+    }
+
+    this.popContext = function() {
+      closeLiterals();
+      var 
+        old = contextStack.pop(),
+        top = contextStack[contextStack.length - 1];
+      context = top.context;
+      separator = top.separator;
+      if (old.context.length === 1) {
+        this.push(old.context + '');
+      } else if (old.context.length > 0) {
+        if (old.separator) {
+          this.push('[' + old.context.join(',') + '].join("' + old.separator + '")')
+        } else {
+          this.push(old.context.join('+'));
+        }
+      }
+    }
+
     var pushLiteral = this.pushLiteral = function(s) {
       if (literals) {
-        literals += '\n' + s;
+        literals += separator + s;
       } else {
         literals = s + '';
       }
@@ -37,7 +64,7 @@ define(function() {
 
     var push = this.push = function(o) {
       closeLiterals();
-      compiled.push(o);
+      context.push(o);
     }
 
     this.compile = function(node) {
@@ -48,42 +75,54 @@ define(function() {
           this.compile(node[i]);
         }
       } else if (isObject(node)) {
+        len = contextStack.length;
         for (i = 0; i < handlerCount; i++) {
           name = handlerOrder[i];
-          if (name in node) {
-            handlers[name](node, this);
-            break;
-          }
+          if (name in node && handlers[name](node, this) !== false) break;
         }
         if (!(name in node)) {
           if (node.toString !== _objToString) {
             pushLiteral(node);
           } else {
-            throw new Error('No handler for ' + JSON.stringify(node));
+            throw new Error('No handler for: ' + JSON.stringify(node));
           }
+        } else if (contextStack.length !== len) {
+          throw new Error('handler "' + name + '" ' +
+            (contextStack.length > len ? 'pushed' : 'popped') +
+            ' too many compiler contexts for: ' + JSON.stringify(node));
         }
       } else {
         pushLiteral(node);
       }
     }
 
+    this.toString = function() {
+      return src;
+    }
+
     if (isArray(definition) || isObject(definition)) {
       this.compile(definition);
       closeLiterals();
-      if (compiled.length === 1) {
-        src = 'return ' + compiled;
-      } else {
-        src = 'return [\n' + compiled.join(',\n') + '].join("\\n")';
+      if (contextStack.length !== 1) {
+        throw new Error('Invalid compiler context, ' +
+          'perhaps a handler is missing a call to popContext()?');
       }
-      // console.log(src);
-      return new Function(src);
+      if (context.length === 1) {
+        src = 'return ' + context;
+      } else {
+        src = 'return [\n' + context.join(',\n') + '].join("\\n");';
+      }
     } else {
       throw new Error('Layout definition must be an Array or plain Object');
     }
   }
 
   function Layout(definition) {
-    return new Compiler(definition);
+    return new Function(new Compiler(definition));
+  }
+
+  Layout.compile = function(definition) {
+    return new Compiler(definition) + '';
   }
 
   Layout.handlers = {};
@@ -106,8 +145,53 @@ define(function() {
     }
   }
 
+  var selfClosingTags = {
+    area:true, base:true, br:true, col:true, command:true, embed:true, 
+    hr:true, img:true, input:true, keygen:true, link:true, meta:true, 
+    param:true, source:true, track:true, wbr:true
+  };
+
+  var escape = function(s) {
+    return (s + '')
+      .replace(/&(?!(\w+|\#\d+);)/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  var pushAttr = function(compiler, name, value) {
+    var type = typeof value;
+    if (type === 'string') {
+      compiler.pushLiteral(' ' + name + '="' + escape(value) + '"');
+    } else if (type !== 'undefined') {
+      compiler.pushLiteral(' ' + name + '="');
+      compiler.pushContext(' ');
+      compiler.compile(value);
+      compiler.popContext();
+      compiler.pushLiteral('"');
+    }
+  }
+
   Layout.addHandler(function tag(node, compiler) {
-    
+    compiler.pushContext();
+    compiler.pushLiteral('<' + node.tag);
+    pushAttr(compiler, 'id', node.id);
+    pushAttr(compiler, 'class', node.cls)
+    pushAttr(compiler, 'name', node.name)
+    pushAttr(compiler, 'value', node.value)
+    if (node.attr) {
+      for (var key in node.attr) {
+        pushAttr(compiler, key, node.attr[key]);
+      }
+    }
+    compiler.pushLiteral('>');
+    compiler.popContext();
+    if (node.content) {
+      this.compile(node.content);
+    }
+    if (node.content || !(node.tag in selfClosingTags)) {
+      compiler.pushLiteral('</' + node.tag + '>');
+    }
   });
 
   return Layout;
