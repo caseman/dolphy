@@ -169,7 +169,9 @@ define(function() {
     var type = typeof value;
     if (type === 'string') {
       compiler.pushLiteral(' ' + name + '="' + escape(value) + '"');
-    } else if (type !== 'undefined') {
+    } else if (value === true) {
+      compiler.pushLiteral(' ' + name);
+    } else if (value !== false && type !== 'undefined') {
       compiler.pushLiteral(' ' + name + '="');
       compiler.pushContext(' ');
       compiler.compile(value);
@@ -182,9 +184,9 @@ define(function() {
     this.pushContext();
     this.pushLiteral('<' + node.tag);
     pushAttr(this, 'id', node.id);
-    pushAttr(this, 'class', node.cls)
-    pushAttr(this, 'name', node.name)
-    pushAttr(this, 'value', node.value)
+    pushAttr(this, 'class', node.cls);
+    pushAttr(this, 'name', node.name);
+    pushAttr(this, 'value', node.value);
     if (node.attr) {
       for (var key in node.attr) {
         pushAttr(this, key, node.attr[key]);

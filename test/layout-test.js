@@ -189,6 +189,16 @@ dolphyTest('#tag other attr', 'Layout', function(Layout) {
   assert(html.indexOf(' type="checkbox"') > -1, html);
 });
 
+dolphyTest('#tag bool attr true', 'Layout', function(Layout) {
+  var L = Layout({tag: 'input', attr: {checked: true}});
+  assert.strictEqual(L(), '<input checked>');
+});
+
+dolphyTest('#tag bool attr false', 'Layout', function(Layout) {
+  var L = Layout({tag: 'input', attr: {checked: false}});
+  assert.strictEqual(L(), '<input>');
+});
+
 dolphyTest('#tag other attr escape', 'Layout', function(Layout) {
   var html = Layout({tag: 'input', attr: {'data-stuff': '<html>'}})();
   assert(html.indexOf(' data-stuff="&lt;html&gt;"') > -1, html);
