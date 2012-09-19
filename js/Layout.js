@@ -1,4 +1,5 @@
 define(function() {
+  'use strict';
   var 
     isArray = Array.isArray,
     _objToString = Object.prototype.toString;
