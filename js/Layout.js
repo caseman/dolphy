@@ -27,27 +27,28 @@ define(function() {
                   .replace(/"/g, '\\"')
           + '"');
         literals = '';
-        firstLiteral = true;
       }
     }
 
     this.pushContext = function(separatorChar) {
       context = [];
+      if (literals) literals += separator;
       separator = separatorChar || '';
       contextStack.push({context: context, separator: separator});
       firstLiteral = true;
     }
 
     this.popContext = function() {
-      if (context.length) closeLiterals();
       var 
         old = contextStack.pop(),
         top = contextStack[contextStack.length - 1];
       context = top.context;
       separator = top.separator;
       if (old.context.length === 1) {
+        closeLiterals();
         this.push(old.context + '');
       } else if (old.context.length > 0) {
+        closeLiterals();
         if (old.separator) {
           this.push('[' + old.context.join(',') + '].join("' + old.separator + '")')
         } else {
@@ -67,6 +68,7 @@ define(function() {
 
     var push = this.push = function(o) {
       closeLiterals();
+      firstLiteral = true;
       context.push(o);
     }
 
@@ -81,7 +83,7 @@ define(function() {
         len = contextStack.length;
         for (i = 0; i < handlerCount; i++) {
           name = handlerOrder[i];
-          if (name in node && handlers[name](node, this) !== false) break;
+          if (name in node && handlers[name].call(this, node) !== false) break;
         }
         if (!(name in node)) {
           if (node.toString !== _objToString) {
@@ -176,25 +178,25 @@ define(function() {
     }
   }
 
-  Layout.addHandler(function tag(node, compiler) {
-    compiler.pushContext();
-    compiler.pushLiteral('<' + node.tag);
-    pushAttr(compiler, 'id', node.id);
-    pushAttr(compiler, 'class', node.cls)
-    pushAttr(compiler, 'name', node.name)
-    pushAttr(compiler, 'value', node.value)
+  Layout.addHandler(function tag(node) {
+    this.pushContext();
+    this.pushLiteral('<' + node.tag);
+    pushAttr(this, 'id', node.id);
+    pushAttr(this, 'class', node.cls)
+    pushAttr(this, 'name', node.name)
+    pushAttr(this, 'value', node.value)
     if (node.attr) {
       for (var key in node.attr) {
-        pushAttr(compiler, key, node.attr[key]);
+        pushAttr(this, key, node.attr[key]);
       }
     }
-    compiler.pushLiteral('>');
-    compiler.popContext();
+    this.pushLiteral('>');
+    this.popContext();
     if (node.content) {
       this.compile(node.content);
     }
     if (node.content || !(node.tag in selfClosingTags)) {
-      compiler.pushLiteral('</' + node.tag + '>');
+      this.pushLiteral('</' + node.tag + '>');
     }
   });
 

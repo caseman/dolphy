@@ -103,11 +103,11 @@ dolphyTest('#mixed literals', 'Layout', function(Layout) {
 suite('handler');
 
 dolphyTest('#custom handler function', 'Layout', function(Layout) {
-  Layout.addHandler(function mrAwesomeHandler(node, compiler) {
+  Layout.addHandler(function mrAwesomeHandler(node) {
     if (node.mrAwesomeHandler) {
-      compiler.pushLiteral('Awesome');
+      this.pushLiteral('Awesome');
     } else {
-      compiler.pushLiteral('less awesome');
+      this.pushLiteral('less awesome');
     }
   });
   var L = Layout(
@@ -118,11 +118,11 @@ dolphyTest('#custom handler function', 'Layout', function(Layout) {
 
 dolphyTest('#multiple custom handlers', 'Layout', function(Layout) {
   Layout.addHandler({
-    $testFooThingy: function(node, compiler) {
-      compiler.pushLiteral('foo');
+    $testFooThingy: function(node) {
+      this.pushLiteral('foo');
     },
-    $testBarThingy: function(node, compiler) {
-      compiler.pushLiteral('BAR');
+    $testBarThingy: function(node) {
+      this.pushLiteral('BAR');
     }
   });
   var L = Layout(
@@ -175,5 +175,46 @@ dolphyTest('#tag multiple class', 'Layout', function(Layout) {
   var L = Layout({tag: 'div', cls:['hat', 'beard', 'keys']});
   assert.strictEqual(L(), '<div class="hat beard keys">\n</div>');
 });
+
+dolphyTest('#tag name value', 'Layout', function(Layout) {
+  var html = Layout({tag: 'input', name:'eric', value:'saxman'})();
+  assert.strictEqual(html.slice(0, 7), '<input ');
+  assert(html.indexOf(' name="eric"') > -1, html);
+  assert(html.indexOf(' value="saxman"') > -1, html);
+});
+
+dolphyTest('#tag other attr', 'Layout', function(Layout) {
+  var html = Layout({tag: 'input', attr: {type: 'checkbox'}})();
+  assert.strictEqual(html.slice(0, 7), '<input ');
+  assert(html.indexOf(' type="checkbox"') > -1, html);
+});
+
+dolphyTest('#tag other attr escape', 'Layout', function(Layout) {
+  var html = Layout({tag: 'input', attr: {'data-stuff': '<html>'}})();
+  assert(html.indexOf(' data-stuff="&lt;html&gt;"') > -1, html);
+});
+
+dolphyTest('#tag multi attr', 'Layout', function(Layout) {
+  var html = Layout({tag: 'label', attr: {'for': 'you', 'data-foo': 'bar'}})();
+  assert.strictEqual(html.slice(0, 7), '<label ');
+  assert(html.indexOf(' for="you"') > -1, html);
+  assert(html.indexOf(' data-foo="bar"') > -1, html);
+});
+
+dolphyTest('#tag literal content', 'Layout', function(Layout) {
+  var L = Layout({tag: 'div', content:'Avant garde'});
+  assert.strictEqual(L(), '<div>\nAvant garde\n</div>');
+});
+
+dolphyTest('#tag nested content', 'Layout', function(Layout) {
+  var L = Layout({tag: 'div', content:[
+    {tag: 'hr'},
+    {tag: 'p', cls:'hepcat', content:[
+      'Far', {tag: 'b', content:'out'}
+    ]}
+  ]});
+  assert.strictEqual(L(), '<div>\n<hr>\n<p class="hepcat">\nFar\n<b>\nout\n</b>\n</p>\n</div>');
+});
+
 
 
