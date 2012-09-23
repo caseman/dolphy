@@ -186,13 +186,13 @@ define(function() {
   }
 
   var fixExpr = function(expr) {
-    expr = '(' + expr + ')';
+    var fixed = '(' + expr + ')';
     try {
-      Function('"use strict";' + expr);
+      Function('"use strict";' + fixed);
     } catch (e) {
-      throw SyntaxError(e + ' for expr: ' + JSON.stringify(expr));
+      throw SyntaxError(e.message + ' for expr: ' + JSON.stringify(expr));
     }
-    return expr;
+    return fixed;
   }
 
   Layout.addHandler({
