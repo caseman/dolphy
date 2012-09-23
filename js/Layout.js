@@ -181,25 +181,36 @@ define(function() {
     }
   }
 
-  Layout.addHandler(function tag(node) {
-    this.pushContext();
-    this.pushLiteral('<' + node.tag);
-    pushAttr(this, 'id', node.id);
-    pushAttr(this, 'class', node.cls);
-    pushAttr(this, 'name', node.name);
-    pushAttr(this, 'value', node.value);
-    if (node.attr) {
-      for (var key in node.attr) {
-        pushAttr(this, key, node.attr[key]);
+  var fixExpr = function(expr) {
+    expr = '(' + expr + ')';
+    Function(expr);
+    return expr;
+  }
+
+  Layout.addHandler({
+    tag: function(node) {
+      this.pushContext();
+      this.pushLiteral('<' + node.tag);
+      pushAttr(this, 'id', node.id);
+      pushAttr(this, 'class', node.cls);
+      pushAttr(this, 'name', node.name);
+      pushAttr(this, 'value', node.value);
+      if (node.attr) {
+        for (var key in node.attr) {
+          pushAttr(this, key, node.attr[key]);
+        }
       }
-    }
-    this.pushLiteral('>');
-    this.popContext();
-    if (node.content) {
-      this.compile(node.content);
-    }
-    if (node.content || !(node.tag in selfClosingTags)) {
-      this.pushLiteral('</' + node.tag + '>');
+      this.pushLiteral('>');
+      this.popContext();
+      if (node.content) {
+        this.compile(node.content);
+      }
+      if (node.content || !(node.tag in selfClosingTags)) {
+        this.pushLiteral('</' + node.tag + '>');
+      }
+    },
+    expr: function(node) {
+      this.push(fixExpr(node.expr));
     }
   });
 

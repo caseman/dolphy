@@ -226,5 +226,32 @@ dolphyTest('#tag nested content', 'Layout', function(Layout) {
   assert.strictEqual(L(), '<div>\n<hr>\n<p class="hepcat">\nFar\n<b>\nout\n</b>\n</p>\n</div>');
 });
 
+suite("Expr");
 
+dolphyTest('#constants', 'Layout', function(Layout) {
+  var cases = [true, 1, 'foo', -2.3];
+  for (var i = 0; i < cases.length; i++) {
+    var c = cases[i];
+    var L = Layout({tag:'div', content:{expr: JSON.stringify(c)}});
+    assert.strictEqual(L(), '<div>\n' + c + '\n</div>');
+  }
+});
+
+dolphyTest('#arithmetic', 'Layout', function(Layout) {
+  var L = Layout({tag:'div', content:{expr: '3 * (4 + 1)'}});
+  assert.strictEqual(L(), '<div>\n15\n</div>');
+});
+
+dolphyTest('#comparison', 'Layout', function(Layout) {
+  var L = Layout({tag:'div', content:{expr: '"40" === "4" + "0"'}});
+  assert.strictEqual(L(), '<div>\ntrue\n</div>');
+});
+
+dolphyTest('#syntax error', 'Layout', function(Layout) {
+  assert.throws(function() {Layout({expr: '5 !+ 4'})}, SyntaxError);
+});
+
+dolphyTest('#multi statement', 'Layout', function(Layout) {
+  assert.throws(function() {Layout({expr: '"foo"; "bar"'})}, SyntaxError);
+});
 
