@@ -107,6 +107,7 @@ define(function() {
     }
 
     if (isArray(definition) || isObject(definition)) {
+      this.hasExpr = false;
       this.compile(definition);
       closeLiterals();
       if (contextStack.length !== 1) {
@@ -117,6 +118,9 @@ define(function() {
         src = 'return ' + context;
       } else {
         src = 'return [\n' + context.join(',\n') + '].join("\\n");';
+      }
+      if (this.hasExpr) {
+        src = 'with (arguments[0] || {}) {\n' + src + '\n}';
       }
       // console.log(src);
     } else {
@@ -214,6 +218,7 @@ define(function() {
       }
     },
     expr: function(node) {
+      this.hasExpr = true;
       this.push(fixExpr(node.expr));
     }
   });

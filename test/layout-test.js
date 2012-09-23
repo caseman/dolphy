@@ -247,6 +247,16 @@ dolphyTest('#comparison', 'Layout', function(Layout) {
   assert.strictEqual(L(), '<div>\ntrue\n</div>');
 });
 
+dolphyTest('#var from context', 'Layout', function(Layout) {
+  var L = Layout({tag:'div', content:{expr: 'text'}});
+  assert.strictEqual(L({'text': 'hummina'}), '<div>\nhummina\n</div>');
+});
+
+dolphyTest('#var reference error', 'Layout', function(Layout) {
+  var L = Layout({tag:'div', content:{expr: 'text'}});
+  assert.throws(function() {L()}, ReferenceError);
+});
+
 dolphyTest('#syntax error', 'Layout', function(Layout) {
   assert.throws(function() {Layout({expr: '5 !+ 4'})}, SyntaxError);
 });
