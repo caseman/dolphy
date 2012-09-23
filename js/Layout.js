@@ -53,7 +53,7 @@ define(function() {
         if (old.separator) {
           this.push('[' + old.context.join(',') + '].join("' + old.separator + '")')
         } else {
-          this.push(old.context.join('+'));
+          this.push(old.context.join(''));
         }
       }
     }
@@ -230,6 +230,38 @@ define(function() {
     function expr(node) {
       this.hasExpr = true;
       this.push(fixExpr(this, node.expr, node.escape !== false));
+    },
+    function test(node) {
+      var allowed = {test: true};
+      this.hasExpr = true;
+      this.pushContext();
+      if (node.yes || node.no) {
+        this.push(fixExpr(this, node.test) + '?(');
+        if (node.yes) {
+          this.pushContext();
+          this.compile(node.yes);
+          this.popContext();
+        } else {
+          this.push('""');
+        }
+        this.push('):(');
+        if (node.no) {
+          this.pushContext();
+          this.compile(node.no);
+          this.popContext();
+        } else {
+          this.push('""');
+        }
+        this.push(')');
+        allowed.yes = true;
+        allowed.no = true;
+      }
+      for (var key in node) {
+        if (!allowed[key]) {
+          throw new Error('"' + key + '" not allowed in ' + JSON.stringify(node));
+        }
+      }
+      this.popContext();
     }
   ]);
 

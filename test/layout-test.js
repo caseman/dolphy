@@ -3,7 +3,7 @@ var chai = require('chai');
 var assert = chai.assert;
 
 var requirejs = require('requirejs');
-requirejs.config({baseUrl: 'js', nodeRequire: requirejs});
+requirejs.config({baseUrl: 'js'});
 
 var dolphyTest = function(name, moduleName, func) {
   return test(name, function(done) {
@@ -249,7 +249,7 @@ dolphyTest('#tag nested content', 'Layout', function(Layout) {
   assert.strictEqual(L(), '<div>\n<hr>\n<p class="hepcat">\nFar\n<b>\nout\n</b>\n</p>\n</div>');
 });
 
-suite("Expr");
+suite("Expr handler");
 
 dolphyTest('#constants', 'Layout', function(Layout) {
   var cases = [true, 1, 'foo', -2.3];
@@ -310,4 +310,32 @@ dolphyTest('#redundant properties error', 'Layout', function(Layout) {
 dolphyTest('#error includes expr', 'Layout', function(Layout) {
   assert.throws(function() {Layout({expr: '"foobar'})}, /"foobar/);
 });
+
+suite("Test handler");
+
+dolphyTest('#yes/no', 'Layout', function(Layout) {
+  var L = Layout({test:'wat', yes:"True Dat!", no: "No No No!"});
+  assert.strictEqual(L({wat: true}), 'True Dat!');
+  assert.strictEqual(L({wat: false}), 'No No No!');
+});
+
+dolphyTest('#yes only', 'Layout', function(Layout) {
+  var L = Layout({test:'wat', yes:"True Dat!"});
+  assert.strictEqual(L({wat: true}), 'True Dat!');
+  assert.strictEqual(L({wat: false}), '');
+});
+
+dolphyTest('#no only', 'Layout', function(Layout) {
+  var L = Layout({test:'wat', no: "No No No!"});
+  assert.strictEqual(L({wat: true}), '');
+  assert.strictEqual(L({wat: false}), 'No No No!');
+});
+
+dolphyTest('#yes/no extra properties', 'Layout', function(Layout) {
+  assert.throws(function() {
+    Layout({test:'false', yes:"YES", no: "NO", plural:"HUH?"});
+  });
+});
+
+
 
