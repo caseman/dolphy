@@ -259,3 +259,7 @@ dolphyTest('#redundant properties', 'Layout', function(Layout) {
   assert.throws(function() {Layout({expr: '{a:1, a:2}'})}, SyntaxError);
 });
 
+dolphyTest('#error includes expr', 'Layout', function(Layout) {
+  assert.throws(function() {Layout({expr: '"foobar'})}, /"foobar/);
+});
+
