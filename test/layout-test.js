@@ -257,6 +257,21 @@ dolphyTest('#var reference error', 'Layout', function(Layout) {
   assert.throws(function() {L()}, ReferenceError);
 });
 
+dolphyTest('#escaped implicit', 'Layout', function(Layout) {
+  var L = Layout({tag:'div', content:{expr: 'text + "yadda>"'}});
+  assert.strictEqual(L({'text': '&42<'}), '<div>\n&amp;42&lt;yadda&gt;\n</div>');
+});
+
+dolphyTest('#escaped explicit', 'Layout', function(Layout) {
+  var L = Layout({tag:'div', content:{expr: 'text + "yadda>"', escape:true}});
+  assert.strictEqual(L({'text': '&42<'}), '<div>\n&amp;42&lt;yadda&gt;\n</div>');
+});
+
+dolphyTest('#not escaped', 'Layout', function(Layout) {
+  var L = Layout({tag:'div', content:{expr: 'text + "yadda>"', escape:false}});
+  assert.strictEqual(L({'text': '&42<'}), '<div>\n&42<yadda>\n</div>');
+});
+
 dolphyTest('#syntax error', 'Layout', function(Layout) {
   assert.throws(function() {Layout({expr: '5 !+ 4'})}, SyntaxError);
 });

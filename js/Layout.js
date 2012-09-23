@@ -108,6 +108,7 @@ define(function() {
 
     if (isArray(definition) || isObject(definition)) {
       this.hasExpr = false;
+      this.utilFunctions = {};
       this.compile(definition);
       closeLiterals();
       if (contextStack.length !== 1) {
@@ -121,6 +122,9 @@ define(function() {
       }
       if (this.hasExpr) {
         src = 'with (arguments[0] || {}) {\n' + src + '\n}';
+      }
+      for (var name in this.utilFunctions) {
+        src = this.utilFunctions[name] + '\n' + src;
       }
       // console.log(src);
     } else {
@@ -162,7 +166,7 @@ define(function() {
     param:true, source:true, track:true, wbr:true
   };
 
-  var escape = function(s) {
+  function $escape(s) {
     return (s + '')
       .replace(/&(?!(\w+|\#\d+);)/g, '&amp;')
       .replace(/</g, '&lt;')
@@ -173,7 +177,7 @@ define(function() {
   var pushAttr = function(compiler, name, value) {
     var type = typeof value;
     if (type === 'string') {
-      compiler.pushLiteral(' ' + name + '="' + escape(value) + '"');
+      compiler.pushLiteral(' ' + name + '="' + $escape(value) + '"');
     } else if (value === true) {
       compiler.pushLiteral(' ' + name);
     } else if (value !== false && type !== 'undefined') {
@@ -185,8 +189,14 @@ define(function() {
     }
   }
 
-  var fixExpr = function(expr) {
-    var fixed = '(' + expr + ')';
+  var fixExpr = function(compiler, expr, esc) {
+    var fixed;
+    if (esc) {
+      compiler.utilFunctions['$escape'] = $escape;
+      fixed = '$escape(' + expr + ')';
+    } else {
+      fixed = '(' + expr + ')';
+    }
     try {
       Function('"use strict";' + fixed);
     } catch (e) {
@@ -219,7 +229,7 @@ define(function() {
     },
     expr: function(node) {
       this.hasExpr = true;
-      this.push(fixExpr(node.expr));
+      this.push(fixExpr(this, node.expr, node.escape !== false));
     }
   });
 
