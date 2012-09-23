@@ -251,11 +251,11 @@ dolphyTest('#syntax error', 'Layout', function(Layout) {
   assert.throws(function() {Layout({expr: '5 !+ 4'})}, SyntaxError);
 });
 
-dolphyTest('#multi statement', 'Layout', function(Layout) {
+dolphyTest('#multi statement error', 'Layout', function(Layout) {
   assert.throws(function() {Layout({expr: '"foo"; "bar"'})}, SyntaxError);
 });
 
-dolphyTest('#redundant properties', 'Layout', function(Layout) {
+dolphyTest('#redundant properties error', 'Layout', function(Layout) {
   assert.throws(function() {Layout({expr: '{a:1, a:2}'})}, SyntaxError);
 });
 
