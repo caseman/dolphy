@@ -183,7 +183,7 @@ define(function() {
 
   var fixExpr = function(expr) {
     expr = '(' + expr + ')';
-    Function(expr);
+    Function('"use strict";' + expr);
     return expr;
   }
 

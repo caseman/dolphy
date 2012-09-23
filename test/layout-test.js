@@ -255,3 +255,7 @@ dolphyTest('#multi statement', 'Layout', function(Layout) {
   assert.throws(function() {Layout({expr: '"foo"; "bar"'})}, SyntaxError);
 });
 
+dolphyTest('#redundant properties', 'Layout', function(Layout) {
+  assert.throws(function() {Layout({expr: '{a:1, a:2}'})}, SyntaxError);
+});
+
