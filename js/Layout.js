@@ -154,8 +154,8 @@ define(function() {
     if (typeof handler === 'function') {
       addHandler(handler.name, handler);
     } else {
-      for (var name in handler) {
-        addHandler(name, handler[name]);
+      for (var i in handler) {
+        addHandler(handler[i].name, handler[i]);
       }
     }
   }
@@ -205,8 +205,8 @@ define(function() {
     return fixed;
   }
 
-  Layout.addHandler({
-    tag: function(node) {
+  Layout.addHandler([
+    function tag(node) {
       this.pushContext();
       this.pushLiteral('<' + node.tag);
       pushAttr(this, 'id', node.id);
@@ -227,11 +227,11 @@ define(function() {
         this.pushLiteral('</' + node.tag + '>');
       }
     },
-    expr: function(node) {
+    function expr(node) {
       this.hasExpr = true;
       this.push(fixExpr(this, node.expr, node.escape !== false));
     }
-  });
+  ]);
 
   return Layout;
 });

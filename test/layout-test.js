@@ -117,18 +117,41 @@ dolphyTest('#custom handler function', 'Layout', function(Layout) {
 });
 
 dolphyTest('#multiple custom handlers', 'Layout', function(Layout) {
-  Layout.addHandler({
-    $testFooThingy: function(node) {
+  Layout.addHandler([
+    function $testFooThingy(node) {
       this.pushLiteral('foo');
     },
-    $testBarThingy: function(node) {
+    function $testBarThingy(node) {
       this.pushLiteral('BAR');
     }
-  });
+  ]);
   var L = Layout(
     [{$testFooThingy: true}, {$testBarThingy: true}]
   );
   assert.strictEqual(L(), 'foo\nBAR');
+});
+
+dolphyTest('#multiple custom handlers are ordered', 'Layout', function(Layout) {
+  Layout.addHandler([
+    function $testFirstOne(node) {
+      this.pushLiteral('1');
+    },
+    function $testSecondOne(node) {
+      this.pushLiteral('2');
+    },
+    function $testThirdOne(node) {
+      this.pushLiteral('3');
+    }
+  ]);
+  var L = Layout(
+    [{$testThirdOne: true}, 
+     {$testFirstOne: true, $testThirdOne: true},
+     {$testFirstOne: true, $testSecondOne: true}, 
+     {$testSecondOne: true, $testThirdOne: true},
+     {$testFirstOne: true}, 
+     {$testSecondOne: true}]
+  );
+  assert.strictEqual(L(), '3\n1\n1\n2\n1\n2');
 });
 
 dolphyTest('#unhandled node', 'Layout', function(Layout) {
