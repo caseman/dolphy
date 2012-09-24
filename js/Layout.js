@@ -232,11 +232,13 @@ define(function() {
       this.push(fixExpr(this, node.expr, node.escape !== false));
     },
     function test(node) {
-      var allowed = {test: true};
+      var 
+        allowed = {},
+        expr = fixExpr(this, node.test);
       this.hasExpr = true;
       this.pushContext();
       if (node.yes || node.no) {
-        this.push(fixExpr(this, node.test) + '?(');
+        this.push(expr + '?(');
         if (node.yes) {
           this.pushContext();
           this.compile(node.yes);
@@ -253,8 +255,30 @@ define(function() {
           this.push('""');
         }
         this.push(')');
+        allowed.test = true;
         allowed.yes = true;
         allowed.no = true;
+      } else if (node.empty || node.notEmpty) {
+        this.push('Array.isArray(' + expr + ')?((' + expr + '.length === 0)?(');
+        if (node.empty) {
+          this.pushContext();
+          this.compile(node.empty);
+          this.popContext();
+        } else {
+          this.push('""');
+        }
+        this.push('):(');
+        if (node.notEmpty) {
+          this.pushContext();
+          this.compile(node.notEmpty);
+          this.popContext();
+        } else {
+          this.push('""');
+        }
+        this.push(')):("")');
+        allowed.test = true;
+        allowed.empty = true;
+        allowed.notEmpty = true;
       }
       for (var key in node) {
         if (!allowed[key]) {

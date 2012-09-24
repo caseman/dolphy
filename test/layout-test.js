@@ -313,6 +313,11 @@ dolphyTest('#error includes expr', 'Layout', function(Layout) {
 
 suite("Test handler");
 
+dolphyTest('#no extra properties', 'Layout', function(Layout) {
+  assert.throws(function() {Layout({test:'false'});
+  });
+});
+
 dolphyTest('#yes/no', 'Layout', function(Layout) {
   var L = Layout({test:'wat', yes:"True Dat!", no: "No No No!"});
   assert.strictEqual(L({wat: true}), 'True Dat!');
@@ -335,6 +340,30 @@ dolphyTest('#yes/no extra properties', 'Layout', function(Layout) {
   assert.throws(function() {
     Layout({test:'false', yes:"YES", no: "NO", plural:"HUH?"});
   });
+});
+
+dolphyTest('#empty/notEmpty', 'Layout', function(Layout) {
+  var L = Layout({test:'stuff', empty:'Empty?', notEmpty:'Not So Empty'});
+  assert.strictEqual(L({stuff: []}), 'Empty?');
+  assert.strictEqual(L({stuff: [1,2,3]}), 'Not So Empty');
+});
+
+dolphyTest('#empty only', 'Layout', function(Layout) {
+  var L = Layout({test:'stuff', empty:'Empty!'});
+  assert.strictEqual(L({stuff: []}), 'Empty!');
+  assert.strictEqual(L({stuff: [1,2,3]}), '');
+});
+
+dolphyTest('#notEmpty only', 'Layout', function(Layout) {
+  var L = Layout({test:'stuff', notEmpty:'Not Empty'});
+  assert.strictEqual(L({stuff: []}), '');
+  assert.strictEqual(L({stuff: [1,2,3]}), 'Not Empty');
+});
+
+dolphyTest('#empty/notEmpty not array', 'Layout', function(Layout) {
+  var L = Layout({test:'stuff', empty:'Empty?', notEmpty:'Not So Empty'});
+  assert.strictEqual(L({stuff: ''}), '');
+  assert.strictEqual(L({stuff: 'stuff'}), '');
 });
 
 
