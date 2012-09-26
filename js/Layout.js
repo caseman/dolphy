@@ -102,12 +102,19 @@ define(function() {
       }
     }
 
+    this.localVarName = function() {
+      var name = '_dolphy$' + this.vars.length;
+      this.vars.push(name);
+      return name;
+    }
+
     this.toString = function() {
       return src;
     }
 
     if (isArray(definition) || isObject(definition)) {
       this.hasExpr = false;
+      this.vars = [];
       this.utilFunctions = {};
       this.compile(definition);
       closeLiterals();
@@ -125,6 +132,9 @@ define(function() {
       }
       for (var name in this.utilFunctions) {
         src = this.utilFunctions[name] + '\n' + src;
+      }
+      if (this.vars.length) {
+        src = 'var ' + this.vars.join(',') + ';\n' + src;
       }
       // console.log(src);
     } else {
@@ -259,7 +269,9 @@ define(function() {
         allowed.yes = true;
         allowed.no = true;
       } else if (node.empty || node.notEmpty) {
-        this.push('Array.isArray(' + expr + ')?((' + expr + '.length === 0)?(');
+        var varName = this.localVarName();
+        this.push(varName + '=' + expr + 
+          ',Array.isArray(' + varName + ')?((' + varName + '.length === 0)?(');
         if (node.empty) {
           this.pushContext();
           this.compile(node.empty);

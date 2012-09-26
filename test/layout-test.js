@@ -366,5 +366,13 @@ dolphyTest('#empty/notEmpty not array', 'Layout', function(Layout) {
   assert.strictEqual(L({stuff: 'stuff'}), '');
 });
 
+dolphyTest('#syntax error', 'Layout', function(Layout) {
+  assert.throws(function() {Layout({test: '5 !+ 4', yes:'ohno'})}, SyntaxError);
+});
 
-
+dolphyTest('#expr evaluated once', 'Layout', function(Layout) {
+  var L = Layout({test:'a.push(1), a', notEmpty:'good'});
+  var a = [];
+  L({a: a});
+  assert.deepEqual(a, [1]);
+});
