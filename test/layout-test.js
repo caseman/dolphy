@@ -376,3 +376,52 @@ dolphyTest('#expr evaluated once', 'Layout', function(Layout) {
   L({a: a});
   assert.deepEqual(a, [1]);
 });
+
+dolphyTest('#singular/plural/none array', 'Layout', function(Layout) {
+  var L = Layout({test:'stuff', singular:'One', plural:'Many', none:'None'});
+  assert.strictEqual(L({stuff: [1]}), 'One');
+  assert.strictEqual(L({stuff: [1,2,3]}), 'Many');
+  assert.strictEqual(L({stuff: []}), 'None');
+});
+
+dolphyTest('#singular/plural array', 'Layout', function(Layout) {
+  var L = Layout({test:'stuff', singular:'One', plural:'Many'});
+  assert.strictEqual(L({stuff: [1]}), 'One');
+  assert.strictEqual(L({stuff: [1,2,3]}), 'Many');
+  assert.strictEqual(L({stuff: []}), 'Many');
+});
+
+dolphyTest('#singular/plural/none number', 'Layout', function(Layout) {
+  var L = Layout({test:'stuff', singular:'One', plural:'Many', none:'None'});
+  assert.strictEqual(L({stuff: 1}), 'One');
+  assert.strictEqual(L({stuff: 3}), 'Many');
+  assert.strictEqual(L({stuff: 0}), 'None');
+});
+
+dolphyTest('#singular/plural number', 'Layout', function(Layout) {
+  var L = Layout({test:'stuff', singular:'One', plural:'Many'});
+  assert.strictEqual(L({stuff: 1}), 'One');
+  assert.strictEqual(L({stuff: 5}), 'Many');
+  assert.strictEqual(L({stuff: 0}), 'Many');
+});
+
+dolphyTest('#singular only', 'Layout', function(Layout) {
+  var L = Layout({test:'stuff', singular:'One'});
+  assert.strictEqual(L({stuff: 1}), 'One');
+  assert.strictEqual(L({stuff: 3}), '');
+  assert.strictEqual(L({stuff: 0}), '');
+});
+
+dolphyTest('#plural only', 'Layout', function(Layout) {
+  var L = Layout({test:'stuff', plural:'Many'});
+  assert.strictEqual(L({stuff: 1}), '');
+  assert.strictEqual(L({stuff: 5}), 'Many');
+  assert.strictEqual(L({stuff: 0}), 'Many');
+});
+
+dolphyTest('#none only', 'Layout', function(Layout) {
+  var L = Layout({test:'stuff', none:'Nothing'});
+  assert.strictEqual(L({stuff: 1}), '');
+  assert.strictEqual(L({stuff: 5}), '');
+  assert.strictEqual(L({stuff: 0}), 'Nothing');
+});

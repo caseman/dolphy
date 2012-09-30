@@ -136,14 +136,19 @@ define(function() {
       if (this.vars.length) {
         src = 'var ' + this.vars.join(',') + ';\n' + src;
       }
-      // console.log(src);
     } else {
       throw new Error('Layout definition must be an Array or plain Object');
     }
   }
 
   function Layout(definition) {
-    return new Function(new Compiler(definition));
+    var src = Layout.compile(definition);
+    try {
+      return new Function(src);
+    } catch (e) {
+      console.log(src);
+      throw e;
+    }
   }
 
   Layout.compile = function(definition) {
@@ -244,7 +249,8 @@ define(function() {
     function test(node) {
       var 
         allowed = {},
-        expr = fixExpr(this, node.test);
+        expr = fixExpr(this, node.test),
+        varName;
       this.hasExpr = true;
       this.pushContext();
       if (node.yes || node.no) {
@@ -269,7 +275,7 @@ define(function() {
         allowed.yes = true;
         allowed.no = true;
       } else if (node.empty || node.notEmpty) {
-        var varName = this.localVarName();
+        varName = this.localVarName();
         this.push(varName + '=' + expr + 
           ',Array.isArray(' + varName + ')?((' + varName + '.length === 0)?(');
         if (node.empty) {
@@ -291,6 +297,36 @@ define(function() {
         allowed.test = true;
         allowed.empty = true;
         allowed.notEmpty = true;
+      } else if (node.plural || node.singular || node.none) {
+        varName = this.localVarName();
+        this.push(varName + '=' + expr + ',' +
+          varName + '= Array.isArray(' + varName + ')?' + varName + '.length' +
+          ':' + varName + ',');
+        if (node.none) {
+          this.push('(' + varName + ' === 0)?(');
+          this.pushContext();
+          this.compile(node.none);
+          this.popContext();
+          this.push('):(');
+        }
+        if (node.plural) {
+          this.push('(' + varName + ' !== 1)?(');
+          this.pushContext();
+          this.compile(node.plural);
+          this.popContext();
+          this.push('):(');
+        }
+        if (node.singular) {
+          this.push('(' + varName + ' === 1)?(');
+          this.pushContext();
+          this.compile(node.singular);
+          this.popContext();
+          this.push('):(');
+        }
+        this.push('""');
+        var clauses = !!node.none + !!node.plural + !!node.singular;
+        while (clauses-- > 0) this.push(')');
+        allowed.test = allowed.none = allowed.plural = allowed.singular = true;
       }
       for (var key in node) {
         if (!allowed[key]) {
