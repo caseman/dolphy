@@ -294,6 +294,7 @@ define(function() {
         this.push(')):("")');
         allowed.test = allowed.empty = allowed.notEmpty = true;
       } else if (node.plural || node.singular || node.none) {
+        var closing = '';
         varName = this.localVarName();
         this.push(varName + '=' + expr + ',' +
           varName + '= Array.isArray(' + varName + ')?' + varName + '.length' +
@@ -304,6 +305,7 @@ define(function() {
           this.compile(node.none);
           this.popContext();
           this.push('):(');
+          closing += ')';
         }
         if (node.plural) {
           this.push('(' + varName + ' !== 1)?(');
@@ -311,6 +313,7 @@ define(function() {
           this.compile(node.plural);
           this.popContext();
           this.push('):(');
+          closing += ')';
         }
         if (node.singular) {
           this.push('(' + varName + ' === 1)?(');
@@ -318,10 +321,9 @@ define(function() {
           this.compile(node.singular);
           this.popContext();
           this.push('):(');
+          closing += ')';
         }
-        this.push('""');
-        var clauses = !!node.none + !!node.plural + !!node.singular;
-        while (clauses-- > 0) this.push(')');
+        this.push('""' + closing);
         allowed.test = allowed.none = allowed.plural = allowed.singular = true;
       }
       for (var key in node) {
