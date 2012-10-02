@@ -294,7 +294,7 @@ define(function() {
         this.push(')):("")');
         allowed.test = allowed.empty = allowed.notEmpty = true;
       } else if (node.plural || node.singular || node.none) {
-        var closing = '';
+        var closing = '""';
         varName = this.localVarName();
         this.push(varName + '=' + expr + ',' +
           varName + '= Array.isArray(' + varName + ')?' + varName + '.length' +
@@ -323,7 +323,7 @@ define(function() {
           this.push('):(');
           closing += ')';
         }
-        this.push('""' + closing);
+        this.push(closing);
         allowed.test = allowed.none = allowed.plural = allowed.singular = true;
       }
       for (var key in node) {
