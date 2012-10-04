@@ -300,6 +300,15 @@ dolphyTest('#attr escaped', 'Layout', function(Layout) {
   assert.strictEqual(L({'value': 'foo&bar'}), '<input value="&lt;foo&amp;bar&gt;">');
 });
 
+dolphyTest('#attr omit empty', 'Layout', function(Layout) {
+  var L = Layout({tag:'div', cls:{expr: 'cls', omitEmpty: true}});
+  assert.strictEqual(L({'cls': 'bleah'}), '<div class="bleah"></div>');
+  assert.strictEqual(L({'cls': ''}), '<div></div>');
+  assert.strictEqual(L({'cls': null}), '<div></div>');
+  assert.strictEqual(L({'cls': false}), '<div></div>');
+  assert.strictEqual(L({'cls': undefined}), '<div></div>');
+});
+
 dolphyTest('#syntax error', 'Layout', function(Layout) {
   assert.throws(function() {Layout({expr: '5 !+ 4'})}, SyntaxError);
 });

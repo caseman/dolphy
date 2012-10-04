@@ -41,19 +41,19 @@ define(function() {
       handlerOrder = Layout.handlerOrder,
       handlerCount = Layout.handlerOrder.length;
 
-    this.compile = function(node, sep) {
-      var len, i, name, res;
+    this.compile = function(node, options) {
+      var len, i, name, res, sep;
       if (isArray(node)) {
         len = node.length;
-        if (sep) sep = stringify(sep);
+        if (options && options.sep) sep = stringify(options.sep);
         res = '';
         for (i = 0; i < len; i++) {
           if (node[i] != null) {
             if (res) {
               if (sep) res = splice(res, sep);
-              res = splice(res, this.compile(node[i], sep));
+              res = splice(res, this.compile(node[i], options));
             } else {
-              res = this.compile(node[i], sep);
+              res = this.compile(node[i], options);
             }
           }
         }
@@ -62,7 +62,7 @@ define(function() {
         for (i = 0; i < handlerCount; i++) {
           name = handlerOrder[i];
           if (name in node) {
-            res = handlers[name].call(this, node);
+            res = handlers[name].call(this, node, options);
             if (res != null) return res;
           }
         }
@@ -90,7 +90,7 @@ define(function() {
       this.hasExpr = false;
       this.vars = [];
       this.utilFunctions = {};
-      src = 'return ' + (this.compile(definition, '\n') || '""');
+      src = 'return ' + (this.compile(definition, {sep: '\n'}) || '""');
       if (this.hasExpr) {
         src = 'with (arguments[0] || {}) {\n' + src + '\n}';
       }
@@ -154,11 +154,22 @@ define(function() {
   }
 
   var compileAttr = function(compiler, name, value) {
-    var type = typeof value;
+    var varName, type = typeof value;
     if (value === true) return stringify(' ' + name);
     if (type === 'string') value = $escape(value);
     if (value !== false && type !== 'undefined') {
-      return join(['" ' + name + '=\\""', compiler.compile(value, ' '), '"\\""']);
+      if (value.omitEmpty) {
+        compiler.utilFunctions['$escape'] = $escape;
+        varName = compiler.localVarName();
+        return ('(' + varName + '=(' + 
+          compiler.compile(value, {sep: ' ', escape: false}) + '),(' +
+          varName + '?(" ' + name + '=\\""' +
+          '+$escape(' + varName + ')+"\\""):""))');
+      } else {
+        return join(['" ' + name + '=\\""', 
+          compiler.compile(value, {sep: ' ', escape: true}), 
+          '"\\""']);
+      }
     }
   }
 
@@ -193,7 +204,7 @@ define(function() {
       parts.push('">"');
       if (node.content) {
         parts.push('"\\n"');
-        parts.push(this.compile(node.content, '\n'));
+        parts.push(this.compile(node.content, {sep: '\n'}));
         parts.push('"\\n"');
       }
       if (node.content || !(node.tag in selfClosingTags)) {
@@ -201,11 +212,12 @@ define(function() {
       }
       return join(parts);
     },
-    function expr(node) {
+    function expr(node, options) {
       this.hasExpr = true;
-      return fixExpr(this, node.expr, node.escape !== false);
+      return fixExpr(this, node.expr, 
+        !(node.escape === false || options.escape === false) || options.escape);
     },
-    function test(node) {
+    function test(node, options) {
       var 
         allowed = {},
         expr = fixExpr(this, node.test),
@@ -215,13 +227,13 @@ define(function() {
       if (node.yes || node.no) {
         res = expr + '?(';
         if (node.yes) {
-          res += this.compile(node.yes);
+          res += this.compile(node.yes, options);
         } else {
           res += '""';
         }
         res += '):(';
         if (node.no) {
-          res += this.compile(node.no);
+          res += this.compile(node.no, options);
         } else {
           res += '""';
         }
@@ -232,13 +244,13 @@ define(function() {
         res = (varName + '=' + expr + 
           ',Array.isArray(' + varName + ')?((' + varName + '.length === 0)?(');
         if (node.empty) {
-          res += this.compile(node.empty);
+          res += this.compile(node.empty, options);
         } else {
           res += '""';
         }
         res += '):(';
         if (node.notEmpty) {
-          res += this.compile(node.notEmpty);
+          res += this.compile(node.notEmpty, options);
         } else {
           res += '""';
         }
@@ -252,17 +264,17 @@ define(function() {
           ':' + varName + ',');
         if (node.none) {
           res += ('(' + varName + ' === 0)?('
-            + this.compile(node.none) + '):(');
+            + this.compile(node.none, options) + '):(');
           closing += ')';
         }
         if (node.plural) {
           res += ('(' + varName + ' !== 1)?('
-            + this.compile(node.plural) + '):(');
+            + this.compile(node.plural, options) + '):(');
           closing += ')';
         }
         if (node.singular) {
           res += ('(' + varName + ' === 1)?('
-            + this.compile(node.singular) + '):(');
+            + this.compile(node.singular, options) + '):(');
           closing += ')';
         }
         res += closing;
