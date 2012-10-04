@@ -8,97 +8,82 @@ define(function() {
     return _objToString.call(obj) === '[object Object]';
   };
 
+  function splice(a, b) {
+    if (a.charAt(a.length - 1) === '"' && b.charAt(0) === '"') {
+      return a.slice(0, -1) + b.slice(1);
+    } else {
+      return a + '+' + b;
+    }
+  }
+
+  function join(exprs, sep) {
+    var next,
+      len = exprs.length,
+      res = exprs[0];
+    if (sep) {
+      sep = JSON.stringify(sep);;
+      for (var i = 1; i < len; i++) {
+        if (exprs[i] != null) res = splice(splice(res, sep), exprs[i] + '');
+      }
+    } else {
+      for (var i = 1; i < len; i++) {
+        if (exprs[i] != null) res = splice(res, exprs[i] + '');
+      }
+    }
+    return res;
+  }
+
   function Compiler(definition) {
     var 
       src,
-      context = [],
-      separator = '\n',
-      contextStack = [{context: context, separator: separator}],
-      literals = '',
-      firstLiteral = true,
       handlers = Layout.handlers,
       handlerOrder = Layout.handlerOrder,
       handlerCount = Layout.handlerOrder.length;
 
     function closeLiterals() {
-      if (literals) {
+      var tmp = literals;
+      if (tmp) {
+        literals = '';
         context.push('"' + 
-          literals.replace(/\\/g, '\\\\')
+          tmp.replace(/\\/g, '\\\\')
                   .replace(/\n/g, '\\n')
                   .replace(/"/g, '\\"')
           + '"');
-        literals = '';
       }
     }
 
-    this.pushContext = function(separatorChar) {
-      context = [];
-      if (literals) literals += separator;
-      separator = separatorChar || '';
-      contextStack.push({context: context, separator: separator});
-      firstLiteral = true;
-    }
-
-    this.popContext = function() {
-      var 
-        old = contextStack.pop(),
-        top = contextStack[contextStack.length - 1];
-      context = top.context;
-      separator = top.separator;
-      if (old.context.length === 1) {
-        closeLiterals();
-        this.push(old.context + '');
-      } else if (old.context.length > 0) {
-        closeLiterals();
-        if (old.separator) {
-          this.push('[' + old.context.join(',') + '].join("' + old.separator + '")')
-        } else {
-          this.push(old.context.join(''));
-        }
-      }
-    }
-
-    var pushLiteral = this.pushLiteral = function(s) {
-      if (firstLiteral) {
-        literals += s;
-        firstLiteral = false;
-      } else {
-        literals += separator + s;
-      }
-    }
-
-    var push = this.push = function(o) {
-      closeLiterals();
-      firstLiteral = true;
-      context.push(o);
-    }
-
-    this.compile = function(node) {
-      var len, i, name;
+    this.compile = function(node, sep) {
+      var len, i, name, res;
       if (isArray(node)) {
         len = node.length;
-        for (i = 0; i < len; i++) { 
-          this.compile(node[i]);
+        if (sep) sep = JSON.stringify(sep);
+        res = '';
+        for (i = 0; i < len; i++) {
+          if (node[i] != null) {
+            if (res) {
+              if (sep) res = splice(res, sep);
+              res = splice(res, this.compile(node[i], sep));
+            } else {
+              res = this.compile(node[i], sep);
+            }
+          }
         }
+        return res;
       } else if (isObject(node)) {
-        len = contextStack.length;
         for (i = 0; i < handlerCount; i++) {
           name = handlerOrder[i];
-          if (name in node && handlers[name].call(this, node) !== false) break;
-        }
-        if (!(name in node)) {
-          if (node.toString !== _objToString) {
-            pushLiteral(node);
-          } else {
-            throw new Error('No handler for: ' + JSON.stringify(node));
+          if (name in node) {
+            res = handlers[name].call(this, node);
+            if (res != null) return res;
           }
-        } else if (contextStack.length !== len) {
-          throw new Error('handler "' + name + '" ' +
-            (contextStack.length > len ? 'pushed' : 'popped') +
-            ' too many compiler contexts for: ' + JSON.stringify(node));
+        }
+        if (node.toString !== _objToString) {
+          return JSON.stringify(node.toString());
+        } else {
+          throw new Error('No handler for: ' + JSON.stringify(node));
         }
       } else {
-        pushLiteral(node);
+        return JSON.stringify(node + '');
       }
     }
 
@@ -116,17 +101,7 @@ define(function() {
       this.hasExpr = false;
       this.vars = [];
       this.utilFunctions = {};
-      this.compile(definition);
-      closeLiterals();
-      if (contextStack.length !== 1) {
-        throw new Error('Invalid compiler context, ' +
-          'perhaps a handler is missing a call to popContext()?');
-      }
-      if (context.length === 1) {
-        src = 'return ' + context;
-      } else {
-        src = 'return [\n' + context.join(',\n') + '].join("\\n");';
-      }
+      src = 'return ' + (this.compile(definition, '\n') || '""');
       if (this.hasExpr) {
         src = 'with (arguments[0] || {}) {\n' + src + '\n}';
       }
@@ -189,18 +164,12 @@ define(function() {
       .replace(/"/g, '&quot;');
   }
 
-  var pushAttr = function(compiler, name, value) {
+  var compileAttr = function(compiler, name, value) {
     var type = typeof value;
-    if (type === 'string') {
-      compiler.pushLiteral(' ' + name + '="' + $escape(value) + '"');
-    } else if (value === true) {
-      compiler.pushLiteral(' ' + name);
-    } else if (value !== false && type !== 'undefined') {
-      compiler.pushLiteral(' ' + name + '="');
-      compiler.pushContext(' ');
-      compiler.compile(value);
-      compiler.popContext();
-      compiler.pushLiteral('"');
+    if (value === true) return JSON.stringify(' ' + name);
+    if (type === 'string') value = $escape(value);
+    if (value !== false && type !== 'undefined') {
+      return join(['" ' + name + '=\\""', compiler.compile(value, ' '), '"\\""']);
     }
   }
 
@@ -222,108 +191,92 @@ define(function() {
 
   Layout.addHandler([
     function tag(node) {
-      this.pushContext();
-      this.pushLiteral('<' + node.tag);
-      pushAttr(this, 'id', node.id);
-      pushAttr(this, 'class', node.cls);
-      pushAttr(this, 'name', node.name);
-      pushAttr(this, 'value', node.value);
+      var parts = ['"<' + node.tag + '"',
+        compileAttr(this, 'id', node.id),
+        compileAttr(this, 'class', node.cls),
+        compileAttr(this, 'name', node.name),
+        compileAttr(this, 'value', node.value)];
       if (node.attr) {
         for (var key in node.attr) {
-          pushAttr(this, key, node.attr[key]);
+          parts.push(compileAttr(this, key, node.attr[key]));
         }
       }
-      this.pushLiteral('>');
-      this.popContext();
+      parts.push('">"');
       if (node.content) {
-        this.compile(node.content);
+        parts.push('"\\n"');
+        parts.push(this.compile(node.content, '\n'));
+        parts.push('"\\n"');
       }
       if (node.content || !(node.tag in selfClosingTags)) {
-        this.pushLiteral('</' + node.tag + '>');
+        parts.push('"</' + node.tag + '>"');
       }
+      return join(parts);
     },
     function expr(node) {
       this.hasExpr = true;
-      this.push(fixExpr(this, node.expr, node.escape !== false));
+      return fixExpr(this, node.expr, node.escape !== false);
     },
     function test(node) {
       var 
         allowed = {},
         expr = fixExpr(this, node.test),
-        varName;
+        varName,
+        res;
       this.hasExpr = true;
-      this.pushContext();
       if (node.yes || node.no) {
-        this.push(expr + '?(');
+        res = expr + '?(';
         if (node.yes) {
-          this.pushContext();
-          this.compile(node.yes);
-          this.popContext();
+          res += this.compile(node.yes);
         } else {
-          this.push('""');
+          res += '""';
         }
-        this.push('):(');
+        res += '):(';
         if (node.no) {
-          this.pushContext();
-          this.compile(node.no);
-          this.popContext();
+          res += this.compile(node.no);
         } else {
-          this.push('""');
+          res += '""';
         }
-        this.push(')');
+        res += ')';
         allowed.test = allowed.yes = allowed.no = true;
       } else if (node.empty || node.notEmpty) {
         varName = this.localVarName();
-        this.push(varName + '=' + expr + 
+        res = (varName + '=' + expr + 
           ',Array.isArray(' + varName + ')?((' + varName + '.length === 0)?(');
         if (node.empty) {
-          this.pushContext();
-          this.compile(node.empty);
-          this.popContext();
+          res += this.compile(node.empty);
         } else {
-          this.push('""');
+          res += '""';
         }
-        this.push('):(');
+        res += '):(';
         if (node.notEmpty) {
-          this.pushContext();
-          this.compile(node.notEmpty);
-          this.popContext();
+          res += this.compile(node.notEmpty);
         } else {
-          this.push('""');
+          res += '""';
         }
-        this.push(')):("")');
+        res += ')):("")';
         allowed.test = allowed.empty = allowed.notEmpty = true;
       } else if (node.plural || node.singular || node.none) {
         var closing = '""';
         varName = this.localVarName();
-        this.push(varName + '=' + expr + ',' +
+        res = (varName + '=' + expr + ',' +
           varName + '= Array.isArray(' + varName + ')?' + varName + '.length' +
           ':' + varName + ',');
         if (node.none) {
-          this.push('(' + varName + ' === 0)?(');
-          this.pushContext();
-          this.compile(node.none);
-          this.popContext();
-          this.push('):(');
+          res += ('(' + varName + ' === 0)?('
+            + this.compile(node.none) + '):(');
           closing += ')';
         }
         if (node.plural) {
-          this.push('(' + varName + ' !== 1)?(');
-          this.pushContext();
-          this.compile(node.plural);
-          this.popContext();
-          this.push('):(');
+          res += ('(' + varName + ' !== 1)?('
+            + this.compile(node.plural) + '):(');
           closing += ')';
         }
         if (node.singular) {
-          this.push('(' + varName + ' === 1)?(');
-          this.pushContext();
-          this.compile(node.singular);
-          this.popContext();
-          this.push('):(');
+          res += ('(' + varName + ' === 1)?('
+            + this.compile(node.singular) + '):(');
           closing += ')';
         }
-        this.push(closing);
+        res += closing;
         allowed.test = allowed.none = allowed.plural = allowed.singular = true;
       }
       for (var key in node) {
@@ -331,7 +284,7 @@ define(function() {
           throw new Error('"' + key + '" not allowed in ' + JSON.stringify(node));
         }
       }
-      this.popContext();
+      return res;
     }
   ]);
 

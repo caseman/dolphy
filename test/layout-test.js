@@ -105,9 +105,9 @@ suite('handler');
 dolphyTest('#custom handler function', 'Layout', function(Layout) {
   Layout.addHandler(function mrAwesomeHandler(node) {
     if (node.mrAwesomeHandler) {
-      this.pushLiteral('Awesome');
+      return '"Awesome"';
     } else {
-      this.pushLiteral('less awesome');
+      return '"less awesome"';
     }
   });
   var L = Layout(
@@ -119,10 +119,10 @@ dolphyTest('#custom handler function', 'Layout', function(Layout) {
 dolphyTest('#multiple custom handlers', 'Layout', function(Layout) {
   Layout.addHandler([
     function $testFooThingy(node) {
-      this.pushLiteral('foo');
+      return '"foo"';
     },
     function $testBarThingy(node) {
-      this.pushLiteral('BAR');
+      return '"BAR"';
     }
   ]);
   var L = Layout(
@@ -134,13 +134,13 @@ dolphyTest('#multiple custom handlers', 'Layout', function(Layout) {
 dolphyTest('#multiple custom handlers are ordered', 'Layout', function(Layout) {
   Layout.addHandler([
     function $testFirstOne(node) {
-      this.pushLiteral('1');
+      return '"1"';
     },
     function $testSecondOne(node) {
-      this.pushLiteral('2');
+      return '"2"';
     },
     function $testThirdOne(node) {
-      this.pushLiteral('3');
+      return '"3"';
     }
   ]);
   var L = Layout(
@@ -166,7 +166,7 @@ suite('tag handler');
 
 dolphyTest('#basic tag', 'Layout', function(Layout) {      
   var L = Layout({tag: 'div'});
-  assert.strictEqual(L(), '<div>\n</div>');
+  assert.strictEqual(L(), '<div></div>');
 });
 
 dolphyTest('#self closing tag', 'Layout', function(Layout) {
@@ -176,27 +176,27 @@ dolphyTest('#self closing tag', 'Layout', function(Layout) {
 
 dolphyTest('#tag id', 'Layout', function(Layout) {
   var L = Layout({tag: 'div', id:'alto'});
-  assert.strictEqual(L(), '<div id="alto">\n</div>');
+  assert.strictEqual(L(), '<div id="alto"></div>');
 });
 
 dolphyTest('#tag id escape', 'Layout', function(Layout) {
   var L = Layout({tag: 'div', id:'"<foo'});
-  assert.strictEqual(L(), '<div id="&quot;&lt;foo">\n</div>');
+  assert.strictEqual(L(), '<div id="&quot;&lt;foo"></div>');
 });
 
 dolphyTest('#tag single class', 'Layout', function(Layout) {
   var L = Layout({tag: 'div', cls:'beard'});
-  assert.strictEqual(L(), '<div class="beard">\n</div>');
+  assert.strictEqual(L(), '<div class="beard"></div>');
 });
 
 dolphyTest('#tag class escape', 'Layout', function(Layout) {
   var L = Layout({tag: 'div', cls:'<&foo'});
-  assert.strictEqual(L(), '<div class="&lt;&amp;foo">\n</div>');
+  assert.strictEqual(L(), '<div class="&lt;&amp;foo"></div>');
 });
 
 dolphyTest('#tag multiple class', 'Layout', function(Layout) {
   var L = Layout({tag: 'div', cls:['hat', 'beard', 'keys']});
-  assert.strictEqual(L(), '<div class="hat beard keys">\n</div>');
+  assert.strictEqual(L(), '<div class="hat beard keys"></div>');
 });
 
 dolphyTest('#tag name value', 'Layout', function(Layout) {
@@ -293,6 +293,12 @@ dolphyTest('#escaped explicit', 'Layout', function(Layout) {
 dolphyTest('#not escaped', 'Layout', function(Layout) {
   var L = Layout({tag:'div', content:{expr: 'text + "yadda>"', escape:false}});
   assert.strictEqual(L({'text': '&42<'}), '<div>\n&42<yadda>\n</div>');
+});
+
+dolphyTest('#attr escaped', 'Layout', function(Layout) {
+  debugger;
+  var L = Layout({tag:'input', value:{expr: '"<" + value + ">"'}});
+  assert.strictEqual(L({'value': 'foo&bar'}), '<input value="&lt;foo&amp;bar&gt;">');
 });
 
 dolphyTest('#syntax error', 'Layout', function(Layout) {
