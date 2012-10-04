@@ -239,6 +239,14 @@ dolphyTest('#tag literal content', 'Layout', function(Layout) {
   assert.strictEqual(L(), '<div>\nAvant garde\n</div>');
 });
 
+dolphyTest('#tag omit empty', 'Layout', function(Layout) {
+  var L = Layout({tag: 'div', omitEmpty: true, content: {expr: 'bleah'}});
+  assert.strictEqual(L({'bleah': 'eh?'}), '<div>\neh?\n</div>');
+  assert.strictEqual(L({'bleah': ''}), '');
+  assert.strictEqual(L({'bleah': undefined}), '');
+  assert.strictEqual(L({'bleah': null}), '');
+});
+
 dolphyTest('#tag nested content', 'Layout', function(Layout) {
   var L = Layout({tag: 'div', content:[
     {tag: 'hr'},

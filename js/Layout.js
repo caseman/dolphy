@@ -146,11 +146,11 @@ define(function() {
   };
 
   function $escape(s) {
-    return (s + '')
+    return s != null ? ((s + '')
       .replace(/&(?!(\w+|\#\d+);)/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+      .replace(/"/g, '&quot;')) : '';
   }
 
   var compileAttr = function(compiler, name, value) {
@@ -191,7 +191,14 @@ define(function() {
 
   Layout.addHandler([
     function tag(node) {
-      var parts = ['"<' + node.tag + '"',
+      var condition, varName, parts;
+      if (node.omitEmpty && node.content) {
+        varName = this.localVarName();
+        condition = ('(' + varName + '=(' 
+          + this.compile(node.content, {sep: '\n'})
+          + '),(' + varName + '?(');
+      }
+      parts = ['"<' + node.tag + '"',
         compileAttr(this, 'id', node.id),
         compileAttr(this, 'class', node.cls),
         compileAttr(this, 'name', node.name),
@@ -204,13 +211,21 @@ define(function() {
       parts.push('">"');
       if (node.content) {
         parts.push('"\\n"');
-        parts.push(this.compile(node.content, {sep: '\n'}));
+        if (node.omitEmpty) {
+          parts.push(varName);
+        } else {
+          parts.push(this.compile(node.content, {sep: '\n'}));
+        }
         parts.push('"\\n"');
       }
       if (node.content || !(node.tag in selfClosingTags)) {
         parts.push('"</' + node.tag + '>"');
       }
-      return join(parts);
+      if (condition) {
+        return condition + join(parts) + '):""))';
+      } else {
+        return join(parts);
+      }
     },
     function expr(node, options) {
       this.hasExpr = true;
