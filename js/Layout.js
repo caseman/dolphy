@@ -2,7 +2,8 @@ define(function() {
   'use strict';
   var 
     isArray = Array.isArray,
-    _objToString = Object.prototype.toString;
+    _objToString = Object.prototype.toString,
+    stringify = JSON.stringify;
 
   function isObject(obj) {
     return _objToString.call(obj) === '[object Object]';
@@ -21,7 +22,7 @@ define(function() {
       len = exprs.length,
       res = exprs[0];
     if (sep) {
-      sep = JSON.stringify(sep);;
+      sep = stringify(sep);;
       for (var i = 1; i < len; i++) {
         if (exprs[i] != null) res = splice(splice(res, sep), exprs[i] + '');
       }
@@ -44,7 +45,7 @@ define(function() {
       var len, i, name, res;
       if (isArray(node)) {
         len = node.length;
-        if (sep) sep = JSON.stringify(sep);
+        if (sep) sep = stringify(sep);
         res = '';
         for (i = 0; i < len; i++) {
           if (node[i] != null) {
@@ -66,12 +67,12 @@ define(function() {
           }
         }
         if (node.toString !== _objToString) {
-          return JSON.stringify(node.toString());
+          return stringify(node.toString());
         } else {
-          throw new Error('No handler for: ' + JSON.stringify(node));
+          throw new Error('No handler for: ' + stringify(node));
         }
       } else {
-        return JSON.stringify(node + '');
+        return stringify(node + '');
       }
     }
 
@@ -154,7 +155,7 @@ define(function() {
 
   var compileAttr = function(compiler, name, value) {
     var type = typeof value;
-    if (value === true) return JSON.stringify(' ' + name);
+    if (value === true) return stringify(' ' + name);
     if (type === 'string') value = $escape(value);
     if (value !== false && type !== 'undefined') {
       return join(['" ' + name + '=\\""', compiler.compile(value, ' '), '"\\""']);
@@ -172,7 +173,7 @@ define(function() {
     try {
       Function('"use strict";' + fixed);
     } catch (e) {
-      throw SyntaxError(e.message + ' for expr: ' + JSON.stringify(expr));
+      throw SyntaxError(e.message + ' for expr: ' + stringify(expr));
     }
     return fixed;
   }
@@ -269,7 +270,7 @@ define(function() {
       }
       for (var key in node) {
         if (!allowed[key]) {
-          throw new Error('"' + key + '" not allowed in ' + JSON.stringify(node));
+          throw new Error('"' + key + '" not allowed in ' + stringify(node));
         }
       }
       return res;
