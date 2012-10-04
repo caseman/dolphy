@@ -40,18 +40,6 @@ define(function() {
       handlerOrder = Layout.handlerOrder,
       handlerCount = Layout.handlerOrder.length;
 
-    function closeLiterals() {
-      var tmp = literals;
-      if (tmp) {
-        literals = '';
-        context.push('"' + 
-          tmp.replace(/\\/g, '\\\\')
-                  .replace(/\n/g, '\\n')
-                  .replace(/"/g, '\\"')
-          + '"');
-      }
-    }
-
     this.compile = function(node, sep) {
       var len, i, name, res;
       if (isArray(node)) {
