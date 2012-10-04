@@ -296,7 +296,6 @@ dolphyTest('#not escaped', 'Layout', function(Layout) {
 });
 
 dolphyTest('#attr escaped', 'Layout', function(Layout) {
-  debugger;
   var L = Layout({tag:'input', value:{expr: '"<" + value + ">"'}});
   assert.strictEqual(L({'value': 'foo&bar'}), '<input value="&lt;foo&amp;bar&gt;">');
 });
