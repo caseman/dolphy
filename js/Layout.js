@@ -82,6 +82,14 @@ define(function() {
       return name;
     }
 
+    this.validateNode = function(node, allowed) {
+      for (var key in node) {
+        if (!allowed[key]) {
+          throw new Error('"' + key + '" not allowed in ' + stringify(node));
+        }
+      }
+    }
+
     this.toString = function() {
       return src;
     }
@@ -234,12 +242,12 @@ define(function() {
     },
     function test(node, options) {
       var 
-        allowed = {},
         expr = fixExpr(this, node.test),
         varName,
         res;
       this.hasExpr = true;
       if (node.yes || node.no) {
+        this.validateNode(node, {test:true, yes:true, no:true});
         res = expr + '?(';
         if (node.yes) {
           res += this.compile(node.yes, options);
@@ -253,8 +261,8 @@ define(function() {
           res += '""';
         }
         res += ')';
-        allowed.test = allowed.yes = allowed.no = true;
       } else if (node.empty || node.notEmpty) {
+        this.validateNode(node, {test:true, empty:true, notEmpty:true});
         varName = this.localVarName();
         res = (varName + '=' + expr + 
           ',Array.isArray(' + varName + ')?((' + varName + '.length === 0)?(');
@@ -270,8 +278,8 @@ define(function() {
           res += '""';
         }
         res += ')):("")';
-        allowed.test = allowed.empty = allowed.notEmpty = true;
       } else if (node.plural || node.singular || node.none) {
+        this.validateNode(node, {test:true, plural:true, singular:true, none:true});
         var closing = '""';
         varName = this.localVarName();
         res = (varName + '=' + expr + ',' +
@@ -293,18 +301,11 @@ define(function() {
           closing += ')';
         }
         res += closing;
-        allowed.test = allowed.none = allowed.plural = allowed.singular = true;
-      }
-      for (var key in node) {
-        if (!allowed[key]) {
-          throw new Error('"' + key + '" not allowed in ' + stringify(node));
-        }
       }
       return res;
     },
     function each(node, options) {
       var 
-        allowed = {},
         itemVar = '$item',
         indexVar = '$index',
         resVar = this.localVarName(),
