@@ -497,3 +497,9 @@ dolphyTest('#complex content', 'Layout', function(Layout) {
   assert.strictEqual(L(['foo', 'bar']), 
     '<input value="3">\n<input value="2">\n<input value="1">');
 });
+
+dolphyTest('#extra properties', 'Layout', function(Layout) {
+  assert.throws(function() {
+    Layout({each:'[]', foobar:false}); 
+  });
+});

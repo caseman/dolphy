@@ -312,6 +312,7 @@ define(function() {
         eachVar = this.localVarName(),
         lenVar = this.localVarName(),
         res;
+      this.validateNode(node, {each: true, content:true, first:true, last:true});
       this.hasExpr = true;
       res = ('(function(){var ' + itemVar + ',' 
         + indexVar + '=0,' + resVar + '="",'
