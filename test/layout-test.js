@@ -447,3 +447,53 @@ dolphyTest('#none only', 'Layout', function(Layout) {
   assert.strictEqual(L({stuff: 5}), '');
   assert.strictEqual(L({stuff: 0}), 'Nothing');
 });
+
+suite('each handler');
+
+dolphyTest('#literal content', 'Layout', function(Layout) {
+  var L = Layout({each:'[1,2,3]', content:'gooche'});
+  assert.strictEqual(L(), 'gooche\ngooche\ngooche');
+});
+
+dolphyTest('#content $item', 'Layout', function(Layout) {
+  var L = Layout({each:'[3,2,1]', content:{expr: '$item - 1'}});
+  assert.strictEqual(L(), '2\n1\n0');
+});
+
+dolphyTest('#content $index', 'Layout', function(Layout) {
+  var L = Layout({each:'[3,2,1]', content:{expr: '$index'}});
+  assert.strictEqual(L(), '0\n1\n2');
+});
+
+dolphyTest('#first', 'Layout', function(Layout) {
+  var L = Layout({each:'[3,2,1]', first:{expr:'"first" + $index'}, content:{expr: '$index'}});
+  assert.strictEqual(L(), 'first0\n0\n1\n2');
+});
+
+dolphyTest('#first empty', 'Layout', function(Layout) {
+  var L = Layout({each:'[]', first:'first', content:{expr: '$index'}});
+  assert.strictEqual(L(), '');
+});
+
+dolphyTest('#last', 'Layout', function(Layout) {
+  var L = Layout({each:'[3,2,1]', last:{expr:'"last" + $index'}, content:{expr: '$index'}});
+  assert.strictEqual(L(), '0\n1\n2\nlast2');
+});
+
+dolphyTest('#last empty', 'Layout', function(Layout) {
+  var L = Layout({each:'[]', last:'last', content:{expr: '$index'}});
+  assert.strictEqual(L(), '');
+});
+
+dolphyTest('#iterable expr', 'Layout', function(Layout) {
+  var L = Layout({each:'iterable', content:{expr: '$item'}});
+  assert.strictEqual(L({iterable: ['foo', 'bar']}), 'foo\nbar');
+  assert.strictEqual(L({iterable: ['groucho', 'harpo', 'zeppo']}), 'groucho\nharpo\nzeppo');
+  assert.strictEqual(L({iterable: []}), '');
+});
+
+dolphyTest('#complex content', 'Layout', function(Layout) {
+  var L = Layout({each:'[3,2,1]', content:{tag: 'input', value: {expr: '$item'}}});
+  assert.strictEqual(L(['foo', 'bar']), 
+    '<input value="3">\n<input value="2">\n<input value="1">');
+});

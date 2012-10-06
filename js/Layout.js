@@ -301,6 +301,46 @@ define(function() {
         }
       }
       return res;
+    },
+    function each(node, options) {
+      var 
+        allowed = {},
+        itemVar = '$item',
+        indexVar = '$index',
+        resVar = this.localVarName(),
+        eachVar = this.localVarName(),
+        lenVar = this.localVarName(),
+        res;
+      this.hasExpr = true;
+      res = ('(function(){var ' + itemVar + ',' 
+        + indexVar + '=0,' + resVar + '="",'
+        + eachVar + '=' + fixExpr(this, node.each) + ','
+        + lenVar + '=' + eachVar + '.length;');
+      if (node.first) {
+        res += 'if (' + lenVar + '>0){'
+          + itemVar + '=' + eachVar + '[0];'
+          + resVar + '=(' + this.compile(node.first, options) + '+"\\n")}';
+      }
+      if (node.content) {
+        res += 'for (;' + indexVar + '<' + lenVar + ';'
+          + indexVar + '++){' + itemVar + '=' + eachVar + '[' + indexVar + '];'
+          + resVar + '+=(' + this.compile(node.content, options);
+        if (node.last) {
+          res += '+"\\n");';
+        } else {
+          res += '+ (' + indexVar + '<' + lenVar + '-1?"\\n":""));';
+        }
+        res += '}';
+      }
+      if (node.last) {
+        res += 'if (' + lenVar + '>0){--' + indexVar + ';';
+        if (!node.content) {
+          res += itemVar + '=' + eachVar + '[' + eachVar + '.length-1];'
+        }
+        res += resVar + '+=(' + this.compile(node.last, options) + ')}';
+      }
+      res += 'return ' + resVar + ';})()';
+      return res;
     }
   ]);
 
