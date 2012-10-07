@@ -513,3 +513,25 @@ dolphyTest('#extra properties', 'Layout', function(Layout) {
     Layout({each:'[]', foobar:false}); 
   });
 });
+
+dolphyTest('#filter', 'Layout', function(Layout) {
+  var L = Layout({each:'[1,2,3,4,5,6]', filter:'$item % 2 === 0', content:{expr: '$item'}});
+  assert.strictEqual(L(), '2\n4\n6');
+});
+
+dolphyTest('#filter omits all', 'Layout', function(Layout) {
+  var L = Layout({each:'[1,2,3]', filter:'$item > 3', content:{expr: '$item'}});
+  assert.strictEqual(L(), '');
+})
+
+dolphyTest('#filter first', 'Layout', function(Layout) {
+  var L = Layout({each:'[1,2,3,4,5]', filter:'$item > 3', 
+    first:{expr: '"first " + $item'}, content:{expr: '$item'}});
+  assert.strictEqual(L(), 'first 4\n4\n5');
+});;
+
+dolphyTest('#filter last', 'Layout', function(Layout) {
+  var L = Layout({each:'[1,2,3,4,5]', filter:'$item < 3', 
+    last:{expr: '"last " + $item'}, content:{expr: '$item'}});
+  assert.strictEqual(L(), '1\n2\nlast 2');
+});;

@@ -311,35 +311,56 @@ define(function() {
         resVar = this.localVarName(),
         eachVar = this.localVarName(),
         lenVar = this.localVarName(),
-        res;
+        filterExpr = '',
+        lastIndexVar, res;
       this.validateNode(node, {each: true, content:true, 
-        first:true, last:true,
+        first:true, last:true, filter: true,
         itemVar:true, indexVar:true});
       this.hasExpr = true;
-      res = ('(function(){var ' + itemVar + ',' 
-        + indexVar + '=0,' + resVar + '="",'
+      res = ('(function(){'
+        + 'var ' + itemVar + ',' + indexVar + '=0,' + resVar + '="",'
         + eachVar + '=' + fixExpr(this, node.each) + ','
         + lenVar + '=' + eachVar + '.length;');
-      if (node.first) {
-        res += 'if (' + lenVar + '>0){'
-          + itemVar + '=' + eachVar + '[0];'
+      if (node.filter) {
+        filterExpr = fixExpr(this, node.filter);
+        lastIndexVar = this.localVarName();
+        res += 'for (;' + indexVar + '<' + lenVar + ';' + indexVar + '++)'
+             + '{' + itemVar + '=' + eachVar + '[' + indexVar + '];'
+             + 'if (' + filterExpr + ') {';
+        if (node.first) {
+          res +=  resVar + '=(' + this.compile(node.first, options) + '+"\\n");';
+        }
+        res += 'break;}}';
+      } else if (node.first) {
+        res += 'if (' + lenVar + '>0' + filterExpr + '){'
+          + itemVar + '=' + eachVar + '[' + indexVar + '];'
           + resVar + '=(' + this.compile(node.first, options) + '+"\\n")}';
       }
       if (node.content) {
-        res += 'for (;' + indexVar + '<' + lenVar + ';'
-          + indexVar + '++){' + itemVar + '=' + eachVar + '[' + indexVar + '];'
-          + resVar + '+=(' + this.compile(node.content, options);
+        res += 'for (;' + indexVar + '<' + lenVar + ';' + indexVar + '++)'
+          + '{' + itemVar + '=' + eachVar + '[' + indexVar + '];'
+        if (filterExpr) {
+          res += 'if (' + filterExpr + ') {' 
+               + lastIndexVar + '=' + indexVar + ';';
+        }
+        res += resVar + '+=(' + this.compile(node.content, options);
         if (node.last) {
           res += '+"\\n");';
         } else {
           res += '+ (' + indexVar + '<' + lenVar + '-1?"\\n":""));';
         }
+        if (filterExpr) res += '}';
         res += '}';
       }
       if (node.last) {
-        res += 'if (' + lenVar + '>0){--' + indexVar + ';';
-        if (!node.content) {
-          res += itemVar + '=' + eachVar + '[' + eachVar + '.length-1];'
+        res += 'if (' + lenVar + '>0){';
+        if (filterExpr) {
+          res += indexVar + '=' + lastIndexVar + ';';
+        } else {
+          res += '--' + indexVar + ';';
+        }
+        if (!node.content || filterExpr) {
+          res += itemVar + '=' + eachVar + '[' + indexVar + '];'
         }
         res += resVar + '+=(' + this.compile(node.last, options) + ')}';
       }
