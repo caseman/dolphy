@@ -465,6 +465,16 @@ dolphyTest('#content $index', 'Layout', function(Layout) {
   assert.strictEqual(L(), '0\n1\n2');
 });
 
+dolphyTest('#itemVar', 'Layout', function(Layout) {
+  var L = Layout({each:'[4,8,1]', itemVar:'foobar', content:{expr: 'foobar+1'}});
+  assert.strictEqual(L(), '5\n9\n2');
+});
+
+dolphyTest('#indexVar', 'Layout', function(Layout) {
+  var L = Layout({each:'[4,8,1]', indexVar:'bizbaz', content:{expr: 'bizbaz*2'}});
+  assert.strictEqual(L(), '0\n2\n4');
+});
+
 dolphyTest('#first', 'Layout', function(Layout) {
   var L = Layout({each:'[3,2,1]', first:{expr:'"first" + $index'}, content:{expr: '$index'}});
   assert.strictEqual(L(), 'first0\n0\n1\n2');

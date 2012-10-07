@@ -306,13 +306,15 @@ define(function() {
     },
     function each(node, options) {
       var 
-        itemVar = '$item',
-        indexVar = '$index',
+        itemVar = node.itemVar || '$item',
+        indexVar = node.indexVar || '$index',
         resVar = this.localVarName(),
         eachVar = this.localVarName(),
         lenVar = this.localVarName(),
         res;
-      this.validateNode(node, {each: true, content:true, first:true, last:true});
+      this.validateNode(node, {each: true, content:true, 
+        first:true, last:true,
+        itemVar:true, indexVar:true});
       this.hasExpr = true;
       res = ('(function(){var ' + itemVar + ',' 
         + indexVar + '=0,' + resVar + '="",'
