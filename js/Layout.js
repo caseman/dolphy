@@ -90,6 +90,15 @@ define(function() {
       }
     }
 
+    this.substitute = function(tmpl, map) {
+      for (var key in map) {
+        if (typeof map[key] !== 'undefined') {
+          tmpl = tmpl.replace(new RegExp('#' + key + '#', 'g'), map[key]);
+        }
+      }
+      return tmpl;
+    }
+
     this.toString = function() {
       return src;
     }
@@ -198,6 +207,7 @@ define(function() {
   }
 
   Layout.addHandler([
+
     function tag(node) {
       var condition, varName, parts;
       if (node.omitEmpty && node.content) {
@@ -235,11 +245,13 @@ define(function() {
         return join(parts);
       }
     },
+
     function expr(node, options) {
       this.hasExpr = true;
       return fixExpr(this, node.expr, 
         !(node.escape === false || options.escape === false) || options.escape);
     },
+
     function test(node, options) {
       var 
         expr = fixExpr(this, node.test),
@@ -304,13 +316,9 @@ define(function() {
       }
       return res;
     },
+
     function each(node, options) {
       var 
-        itemVar = node.itemVar || '$item',
-        indexVar = node.indexVar || '$index',
-        resVar = this.localVarName(),
-        eachVar = this.localVarName(),
-        lenVar = this.localVarName(),
         filterExpr = '',
         lastIndexVar, res;
       this.validateNode(node, {each: true, content:true, 
@@ -318,54 +326,62 @@ define(function() {
         itemVar:true, indexVar:true});
       this.hasExpr = true;
       res = ('(function(){'
-        + 'var ' + itemVar + ',' + indexVar + '=0,' + resVar + '="",'
-        + eachVar + '=' + fixExpr(this, node.each) + ','
-        + lenVar + '=' + eachVar + '.length;');
+        + 'var #itemVar#,#indexVar#=0,#resVar#="",'
+        + '#eachVar#=' + fixExpr(this, node.each) + ','
+        + '#lenVar#=#eachVar#.length;');
       if (node.filter) {
         filterExpr = fixExpr(this, node.filter);
         lastIndexVar = this.localVarName();
-        res += 'for (;' + indexVar + '<' + lenVar + ';' + indexVar + '++)'
-             + '{' + itemVar + '=' + eachVar + '[' + indexVar + '];'
-             + 'if (' + filterExpr + ') {';
+        res += 'for (;#indexVar#<#lenVar#;#indexVar#++) {'
+             + '#itemVar#=#eachVar#[#indexVar#];'
+             + 'if (#filterExpr#) {';
         if (node.first) {
-          res +=  resVar + '=(' + this.compile(node.first, options) + '+"\\n");';
+          res +=  '#resVar#=(' + this.compile(node.first, options) + '+"\\n");';
         }
         res += 'break;}}';
       } else if (node.first) {
-        res += 'if (' + lenVar + '>0' + filterExpr + '){'
-          + itemVar + '=' + eachVar + '[' + indexVar + '];'
-          + resVar + '=(' + this.compile(node.first, options) + '+"\\n")}';
+        res += 'if (#lenVar#>0#filterExpr#){'
+          + '#itemVar#=#eachVar#[#indexVar#];'
+          + '#resVar#=(' + this.compile(node.first, options) + '+"\\n")}';
       }
       if (node.content) {
-        res += 'for (;' + indexVar + '<' + lenVar + ';' + indexVar + '++)'
-          + '{' + itemVar + '=' + eachVar + '[' + indexVar + '];'
+        res += 'for (;#indexVar#<#lenVar#;#indexVar#++){'
+          + '#itemVar#=#eachVar#[#indexVar#];';
         if (filterExpr) {
-          res += 'if (' + filterExpr + ') {' 
-               + lastIndexVar + '=' + indexVar + ';';
+          res += 'if (#filterExpr#) {' 
+              + '#lastIndexVar#=#indexVar#;';
         }
-        res += resVar + '+=(' + this.compile(node.content, options);
+        res += '#resVar#+=(' + this.compile(node.content, options);
         if (node.last) {
           res += '+"\\n");';
         } else {
-          res += '+ (' + indexVar + '<' + lenVar + '-1?"\\n":""));';
+          res += '+ (#indexVar#<#lenVar#-1?"\\n":""));';
         }
         if (filterExpr) res += '}';
         res += '}';
       }
       if (node.last) {
-        res += 'if (' + lenVar + '>0){';
+        res += 'if (#lenVar#>0){';
         if (filterExpr) {
-          res += indexVar + '=' + lastIndexVar + ';';
+          res += '#indexVar#=#lastIndexVar#;';
         } else {
-          res += '--' + indexVar + ';';
+          res += '--#indexVar#;';
         }
         if (!node.content || filterExpr) {
-          res += itemVar + '=' + eachVar + '[' + indexVar + '];'
+          res += '#itemVar#=#eachVar#[#indexVar#];'
         }
-        res += resVar + '+=(' + this.compile(node.last, options) + ')}';
+        res += '#resVar#+=(' + this.compile(node.last, options) + ')}';
       }
-      res += 'return ' + resVar + ';})()';
-      return res;
+      res += 'return #resVar#;})()';
+      return this.substitute(res, {
+        itemVar: node.itemVar || '$item',
+        indexVar: node.indexVar || '$index',
+        resVar: this.localVarName(),
+        eachVar: this.localVarName(),
+        lenVar: this.localVarName(),
+        filterExpr: filterExpr,
+        lastIndexVar: lastIndexVar,
+      });
     }
   ]);
 
