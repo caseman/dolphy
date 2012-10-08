@@ -253,68 +253,48 @@ define(function() {
     },
 
     function test(node, options) {
-      var 
-        expr = fixExpr(this, node.test),
-        varName,
-        res;
       this.hasExpr = true;
       if (node.yes || node.no) {
         this.validateNode(node, {test:true, yes:true, no:true});
-        res = expr + '?(';
-        if (node.yes) {
-          res += this.compile(node.yes, options);
-        } else {
-          res += '""';
-        }
-        res += '):(';
-        if (node.no) {
-          res += this.compile(node.no, options);
-        } else {
-          res += '""';
-        }
-        res += ')';
+        return this.substitute('#expr#?(#yes#):(#no#)', {
+          expr: fixExpr(this, node.test),
+          yes: node.yes ? this.compile(node.yes, options) : '""',
+          no: node.no ? this.compile(node.no, options) : '""'
+        });
       } else if (node.empty || node.notEmpty) {
         this.validateNode(node, {test:true, empty:true, notEmpty:true});
-        varName = this.localVarName();
-        res = (varName + '=' + expr + 
-          ',Array.isArray(' + varName + ')?((' + varName + '.length === 0)?(');
-        if (node.empty) {
-          res += this.compile(node.empty, options);
-        } else {
-          res += '""';
-        }
-        res += '):(';
-        if (node.notEmpty) {
-          res += this.compile(node.notEmpty, options);
-        } else {
-          res += '""';
-        }
-        res += ')):("")';
+        return this.substitute(
+          '#tmp#=#expr#,#tmp#=Array.isArray(#tmp#)?((#tmp#.length === 0)'
+          + '?(#empty#):(#notEmpty#)):("")',
+          {
+            expr: fixExpr(this, node.test),
+            tmp: this.localVarName(),
+            empty: node.empty ? this.compile(node.empty, options) : '""',
+            notEmpty: node.notEmpty ? this.compile(node.notEmpty, options) : '""'
+          }
+        );
       } else if (node.plural || node.singular || node.none) {
         this.validateNode(node, {test:true, plural:true, singular:true, none:true});
         var closing = '""';
-        varName = this.localVarName();
-        res = (varName + '=' + expr + ',' +
-          varName + '= Array.isArray(' + varName + ')?' + varName + '.length' +
-          ':' + varName + ',');
+        var tmpl = '#tmp#=#expr#,#tmp#=Array.isArray(#tmp#)?#tmp#.length:#tmp#,'
+        var map = {expr: fixExpr(this, node.test), tmp: this.localVarName()};
         if (node.none) {
-          res += ('(' + varName + ' === 0)?('
-            + this.compile(node.none, options) + '):(');
+          tmpl += '(#tmp#===0)?(#none#):(';
+          map.none = this.compile(node.none, options);
           closing += ')';
         }
         if (node.plural) {
-          res += ('(' + varName + ' !== 1)?('
-            + this.compile(node.plural, options) + '):(');
+          tmpl += '(#tmp#!==1)?(#plural#):(';
+          map.plural = this.compile(node.plural, options);
           closing += ')';
         }
         if (node.singular) {
-          res += ('(' + varName + ' === 1)?('
-            + this.compile(node.singular, options) + '):(');
+          tmpl += '(#tmp#===1)?(#singular#):(';
+          map.singular = this.compile(node.singular, options);
           closing += ')';
         }
-        res += closing;
+        return this.substitute(tmpl + closing, map);
       }
-      return res;
     },
 
     function each(node, options) {
