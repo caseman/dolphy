@@ -548,15 +548,28 @@ dolphyTest('#basic slot', 'Layout', function(Layout) {
 dolphyTest('#slot metadata', 'Layout', function(Layout) {
   var L = Layout({tag:'div', id:{slot:'id'}, cls:{slot:'cls', escape:true}, 
     content:{slot:'content', required:true}});
-  assert.deepEqual(L.slots, [
-    {slot:'id'}, {slot:'cls', escape:true}, {slot:'content', required:true}
-  ]);
+  assert.strictEqual(L.slots[0].slot, 'id');
+  assert.strictEqual(L.slots[0].escape, undefined);
+  assert.strictEqual(L.slots[0].required, undefined);
+
+  assert.strictEqual(L.slots[1].slot, 'cls');
+  assert.strictEqual(L.slots[1].escape, true);
+  assert.strictEqual(L.slots[1].required, undefined);
+
+  assert.strictEqual(L.slots[2].slot, 'content');
+  assert.strictEqual(L.slots[2].escape, undefined);
+  assert.strictEqual(L.slots[2].required, true);
 });
 
 dolphyTest('#required slot', 'Layout', function(Layout) {
   var L = Layout({tag:'div', id:{slot:'id'}, content:{slot:'content', required:true}});
   assert.throws(function() {Layout({use:L})}, /required/);
   Layout({use:L, content:'UhHuh'});
+});
+
+dolphyTest('#invalid slot', 'Layout', function(Layout) {
+  var L = Layout({tag:'div', id:{slot:'id'}, content:{slot:'content'}});
+  assert.throws(function() {Layout({use:L, foobar:'yo'})}, /foobar/);
 });
 
 dolphyTest('#slot escape explicit', 'Layout', function(Layout) {

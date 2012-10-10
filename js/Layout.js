@@ -178,12 +178,6 @@ define(function() {
       .replace(/"/g, '&quot;')) : '';
   }
 
-  function $requireSlot(name, value) {
-    if (typeof value === 'undefined') {
-      throw new Error('No value supplied for required slot "' + name + '"');
-    }
-  }
-
   var compileAttr = function(compiler, name, value) {
     var varName, type = typeof value;
     if (value === true) return stringify(' ' + name);
@@ -379,36 +373,43 @@ define(function() {
     },
 
     function slot(node, options) {
-      var tmpl = '';
+      var 
+        tmpl = '',
+        slotVar = '_slot$' + node.slot;
       this.validateNode(node, {slot: true, escape: true, required: true});
       if (!this.metadata.slots) this.metadata.slots = [];
       this.metadata.slots.push(node);
-      if (!this.metadata.slotOptions) this.metadata.slotOptions = {};
-      this.metadata.slotOptions[node.slot] = options;
-      if (node.required) {
-        this.utilFunctions['$requireSlot'] = $requireSlot;
-        tmpl = '$requireSlot(#name#,#slotVar#),';
-      }
+      node.options = options;
       if (typeof node.escape !== 'undefined' ? node.escape : options.escape) {
         this.utilFunctions['$escape'] = $escape;
-        tmpl += '$escape(#slotVar#)';
+        return '$escape(' + slotVar + ')';
       } else {
-        tmpl += '#slotVar#';
+        return slotVar;
       }
-      return this.substitute(tmpl, {
-        name: node.slot, 
-        slotVar: '_slot$' + node.slot
-      });
     },
 
     function use(node, options) {
       var 
         slotOptions = node.use.slotOptions,
-        res = '(function(){';
-      for (var key in node) {
-        if (key !== 'use') {
-          res += 'var _slot$' + key + '=(' 
-              + this.compile(node[key], slotOptions[key]) + ');';
+        res = '(function(){',
+        slots = node.use.slots || [],
+        exists = {},
+        name;
+      for (var i = 0; i < slots.length; i++) {
+        name = slots[i].slot;
+        exists[name] = true;
+        res += 'var _slot$' + name + '='; 
+        if (name in node) {
+          res += this.compile(node[name], slots[i].options) + ';';
+        } else if (slots[i].required) {
+          throw Error('No value supplied for required slot "' + name + '"');
+        } else {
+          res += '"";';
+        }
+      }
+      for (name in node) {
+        if (name !== 'use' && !exists[name]) {
+          throw Error('No slot named "' + name + '"');
         }
       }
       res += node.use.src + '})()';
