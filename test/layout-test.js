@@ -548,6 +548,8 @@ dolphyTest('#basic slot', 'Layout', function(Layout) {
 dolphyTest('#slot metadata', 'Layout', function(Layout) {
   var L = Layout({tag:'div', id:{slot:'id'}, cls:{slot:'cls', escape:true}, 
     content:{slot:'content', required:true}});
+  assert.strictEqual(L.slots.length, 3);
+
   assert.strictEqual(L.slots[0].slot, 'id');
   assert.strictEqual(L.slots[0].escape, undefined);
   assert.strictEqual(L.slots[0].required, undefined);
