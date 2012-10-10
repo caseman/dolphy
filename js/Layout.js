@@ -406,7 +406,7 @@ define(function() {
           res += 'var _slot$' + name + '='; 
           if (name in node) {
             res += this.compile(node[name], slots[i].options) + ';';
-          } else if (slots[i].default) {
+          } else if ('default' in slots[i]) {
             res += this.compile(slots[i].default, slots[i].options) + ';';
           } else {
             res += '"";';
