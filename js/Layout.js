@@ -377,7 +377,10 @@ define(function() {
       var 
         tmpl = '',
         slotVar = '_slot$' + node.slot;
-      this.validateNode(node, {slot: true, escape: true, required: true});
+      this.validateNode(node, {slot: true, escape: true, required: true, default:true});
+      if (node.default && node.required) {
+        throw Error('Slot cannot have both default and required "' + stringify(node) + '"');
+      }
       if (!this.metadata.slots) this.metadata.slots = [];
       this.metadata.slots.push(node);
       node.options = options;
@@ -403,6 +406,8 @@ define(function() {
           res += 'var _slot$' + name + '='; 
           if (name in node) {
             res += this.compile(node[name], slots[i].options) + ';';
+          } else if (slots[i].default) {
+            res += this.compile(slots[i].default, slots[i].options) + ';';
           } else {
             res += '"";';
           }

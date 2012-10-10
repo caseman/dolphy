@@ -610,3 +610,16 @@ dolphyTest('#omitted slot no default', 'Layout', function(Layout) {
   assert.strictEqual(L2(), '<div></div>');
 });
 
+dolphyTest('#omitted slot default', 'Layout', function(Layout) {
+  var L1 = Layout({tag:'div', 
+    content:{slot:'content', default:{tag:'b', content:'Bold by Default'}}});
+  var L2 = Layout({use:L1});
+  assert.strictEqual(L2(), '<div><b>Bold by Default</b></div>');
+});
+
+dolphyTest('#slot default and required', 'Layout', function(Layout) {
+  assert.throws(function() {
+    Layout({tag:'div', content:{slot:'content', default:'bleah', required:true}});
+  }, /default and required/);
+});
+
