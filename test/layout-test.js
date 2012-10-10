@@ -522,16 +522,64 @@ dolphyTest('#filter', 'Layout', function(Layout) {
 dolphyTest('#filter omits all', 'Layout', function(Layout) {
   var L = Layout({each:'[1,2,3]', filter:'$item > 3', content:{expr: '$item'}});
   assert.strictEqual(L(), '');
-})
+});
 
 dolphyTest('#filter first', 'Layout', function(Layout) {
   var L = Layout({each:'[1,2,3,4,5]', filter:'$item > 3', 
     first:{expr: '"first " + $item'}, content:{expr: '$item'}});
   assert.strictEqual(L(), 'first 4\n4\n5');
-});;
+});
 
 dolphyTest('#filter last', 'Layout', function(Layout) {
   var L = Layout({each:'[1,2,3,4,5]', filter:'$item < 3', 
     last:{expr: '"last " + $item'}, content:{expr: '$item'}});
   assert.strictEqual(L(), '1\n2\nlast 2');
-});;
+});
+
+suite('slot/use handler');
+
+dolphyTest('#basic slot', 'Layout', function(Layout) {
+  var L1 = Layout({tag:'div', id:{slot:'id'}, cls:{slot:'cls'}, content:{slot:'stuff'}});
+  var L2 = Layout({use:L1, id:'mememe', 
+    cls:['foo', 'bar', 'spam'], stuff:{tag:'p', content:'Woo'}});
+  assert.strictEqual(L2(), '<div id="mememe" class="foo bar spam">\n<p>\nWoo\n</p>\n</div>');
+});
+
+dolphyTest('#slot metadata', 'Layout', function(Layout) {
+  var L = Layout({tag:'div', id:{slot:'id'}, cls:{slot:'cls', escape:true}, 
+    content:{slot:'content', required:true}});
+  assert.deepEqual(L.slots, [
+    {slot:'id'}, {slot:'cls', escape:true}, {slot:'content', required:true}
+  ]);
+});
+
+dolphyTest('#required slot', 'Layout', function(Layout) {
+  var L = Layout({tag:'div', id:{slot:'id'}, content:{slot:'content', required:true}});
+  assert.throws(function() {Layout({use:L})}, /required/);
+  Layout({use:L, content:'UhHuh'});
+});
+
+dolphyTest('#slot escape explicit', 'Layout', function(Layout) {
+  var L1 = Layout({tag:'div', content:{slot:'content', escape:true}});
+  var L2 = Layout({use:L1, content:'<*&34abc>'});
+  assert.strictEqual(L2(), '<div>\n&lt;*&amp;34abc&gt;\n</div>');
+});
+
+dolphyTest('#slot escape implicit', 'Layout', function(Layout) {
+  var L1 = Layout({tag:'div', id:{slot:'id'}});
+  var L2 = Layout({use:L1, id:'<*&34abc>'});
+  assert.strictEqual(L2(), '<div id="&lt;*&amp;34abc&gt;"></div>');
+});
+
+dolphyTest('#slot no escape explicit', 'Layout', function(Layout) {
+  var L1 = Layout({tag:'div', content:{slot:'content', escape:false}});
+  var L2 = Layout({use:L1, content:'<*&34abc>'});
+  assert.strictEqual(L2(), '<div>\n<*&34abc>\n</div>');
+});
+
+dolphyTest('#slot no escape implicit', 'Layout', function(Layout) {
+  var L1 = Layout({tag:'div', content:{slot:'content'}});
+  var L2 = Layout({use:L1, content:'<*&34abc>'});
+  assert.strictEqual(L2(), '<div>\n<*&34abc>\n</div>');
+});
+

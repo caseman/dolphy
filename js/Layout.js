@@ -107,6 +107,7 @@ define(function() {
       this.hasExpr = false;
       this.vars = [];
       this.utilFunctions = {};
+      this.metadata = {};
       src = 'return ' + (this.compile(definition, {sep: '\n'}) || '""');
       if (this.hasExpr) {
         src = 'with (arguments[0] || {}) {\n' + src + '\n}';
@@ -123,13 +124,20 @@ define(function() {
   }
 
   function Layout(definition) {
-    var src = Layout.compile(definition);
+    var 
+      compiler = new Compiler(definition),
+      src = compiler.toString();
     try {
-      return new Function(src);
+      var func = Function(src);
     } catch (e) {
       console.log(src);
       throw e;
     }
+    func.src = src;
+    for (var key in compiler.metadata) {
+      func[key] = compiler.metadata[key];
+    }
+    return func;
   }
 
   Layout.compile = function(definition) {
@@ -168,6 +176,12 @@ define(function() {
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')) : '';
+  }
+
+  function $requireSlot(name, value) {
+    if (typeof value === 'undefined') {
+      throw new Error('No value supplied for required slot "' + name + '"');
+    }
   }
 
   var compileAttr = function(compiler, name, value) {
@@ -362,6 +376,43 @@ define(function() {
         filterExpr: filterExpr,
         lastIndexVar: lastIndexVar,
       });
+    },
+
+    function slot(node, options) {
+      var tmpl = '';
+      this.validateNode(node, {slot: true, escape: true, required: true});
+      if (!this.metadata.slots) this.metadata.slots = [];
+      this.metadata.slots.push(node);
+      if (!this.metadata.slotOptions) this.metadata.slotOptions = {};
+      this.metadata.slotOptions[node.slot] = options;
+      if (node.required) {
+        this.utilFunctions['$requireSlot'] = $requireSlot;
+        tmpl = '$requireSlot(#name#,#slotVar#),';
+      }
+      if (typeof node.escape !== 'undefined' ? node.escape : options.escape) {
+        this.utilFunctions['$escape'] = $escape;
+        tmpl += '$escape(#slotVar#)';
+      } else {
+        tmpl += '#slotVar#';
+      }
+      return this.substitute(tmpl, {
+        name: node.slot, 
+        slotVar: '_slot$' + node.slot
+      });
+    },
+
+    function use(node, options) {
+      var 
+        slotOptions = node.use.slotOptions,
+        res = '(function(){';
+      for (var key in node) {
+        if (key !== 'use') {
+          res += 'var _slot$' + key + '=(' 
+              + this.compile(node[key], slotOptions[key]) + ');';
+        }
+      }
+      res += node.use.src + '})()';
+      return res;
     }
   ]);
 
