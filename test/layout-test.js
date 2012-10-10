@@ -236,12 +236,12 @@ dolphyTest('#tag multi attr', 'Layout', function(Layout) {
 
 dolphyTest('#tag literal content', 'Layout', function(Layout) {
   var L = Layout({tag: 'div', content:'Avant garde'});
-  assert.strictEqual(L(), '<div>\nAvant garde\n</div>');
+  assert.strictEqual(L(), '<div>Avant garde</div>');
 });
 
 dolphyTest('#tag omit empty', 'Layout', function(Layout) {
   var L = Layout({tag: 'div', omitEmpty: true, content: {expr: 'bleah'}});
-  assert.strictEqual(L({'bleah': 'eh?'}), '<div>\neh?\n</div>');
+  assert.strictEqual(L({'bleah': 'eh?'}), '<div>eh?</div>');
   assert.strictEqual(L({'bleah': ''}), '');
   assert.strictEqual(L({'bleah': undefined}), '');
   assert.strictEqual(L({'bleah': null}), '');
@@ -254,7 +254,7 @@ dolphyTest('#tag nested content', 'Layout', function(Layout) {
       'Far', {tag: 'b', content:'out'}
     ]}
   ]});
-  assert.strictEqual(L(), '<div>\n<hr>\n<p class="hepcat">\nFar\n<b>\nout\n</b>\n</p>\n</div>');
+  assert.strictEqual(L(), '<div><hr>\n<p class="hepcat">Far\n<b>out</b></p></div>');
 });
 
 suite("Expr handler");
@@ -264,23 +264,23 @@ dolphyTest('#constants', 'Layout', function(Layout) {
   for (var i = 0; i < cases.length; i++) {
     var c = cases[i];
     var L = Layout({tag:'div', content:{expr: JSON.stringify(c)}});
-    assert.strictEqual(L(), '<div>\n' + c + '\n</div>');
+    assert.strictEqual(L(), '<div>' + c + '</div>');
   }
 });
 
 dolphyTest('#arithmetic', 'Layout', function(Layout) {
   var L = Layout({tag:'div', content:{expr: '3 * (4 + 1)'}});
-  assert.strictEqual(L(), '<div>\n15\n</div>');
+  assert.strictEqual(L(), '<div>15</div>');
 });
 
 dolphyTest('#comparison', 'Layout', function(Layout) {
   var L = Layout({tag:'div', content:{expr: '"40" === "4" + "0"'}});
-  assert.strictEqual(L(), '<div>\ntrue\n</div>');
+  assert.strictEqual(L(), '<div>true</div>');
 });
 
 dolphyTest('#var from context', 'Layout', function(Layout) {
   var L = Layout({tag:'div', content:{expr: 'text'}});
-  assert.strictEqual(L({'text': 'hummina'}), '<div>\nhummina\n</div>');
+  assert.strictEqual(L({'text': 'hummina'}), '<div>hummina</div>');
 });
 
 dolphyTest('#var reference error', 'Layout', function(Layout) {
@@ -290,17 +290,17 @@ dolphyTest('#var reference error', 'Layout', function(Layout) {
 
 dolphyTest('#escaped implicit', 'Layout', function(Layout) {
   var L = Layout({tag:'div', content:{expr: 'text + "yadda>"'}});
-  assert.strictEqual(L({'text': '&42<'}), '<div>\n&amp;42&lt;yadda&gt;\n</div>');
+  assert.strictEqual(L({'text': '&42<'}), '<div>&amp;42&lt;yadda&gt;</div>');
 });
 
 dolphyTest('#escaped explicit', 'Layout', function(Layout) {
   var L = Layout({tag:'div', content:{expr: 'text + "yadda>"', escape:true}});
-  assert.strictEqual(L({'text': '&42<'}), '<div>\n&amp;42&lt;yadda&gt;\n</div>');
+  assert.strictEqual(L({'text': '&42<'}), '<div>&amp;42&lt;yadda&gt;</div>');
 });
 
 dolphyTest('#not escaped', 'Layout', function(Layout) {
   var L = Layout({tag:'div', content:{expr: 'text + "yadda>"', escape:false}});
-  assert.strictEqual(L({'text': '&42<'}), '<div>\n&42<yadda>\n</div>');
+  assert.strictEqual(L({'text': '&42<'}), '<div>&42<yadda></div>');
 });
 
 dolphyTest('#attr escaped', 'Layout', function(Layout) {
@@ -542,7 +542,7 @@ dolphyTest('#basic slot', 'Layout', function(Layout) {
   var L1 = Layout({tag:'div', id:{slot:'id'}, cls:{slot:'cls'}, content:{slot:'stuff'}});
   var L2 = Layout({use:L1, id:'mememe', 
     cls:['foo', 'bar', 'spam'], stuff:{tag:'p', content:'Woo'}});
-  assert.strictEqual(L2(), '<div id="mememe" class="foo bar spam">\n<p>\nWoo\n</p>\n</div>');
+  assert.strictEqual(L2(), '<div id="mememe" class="foo bar spam"><p>Woo</p></div>');
 });
 
 dolphyTest('#slot metadata', 'Layout', function(Layout) {
@@ -577,7 +577,7 @@ dolphyTest('#invalid slot', 'Layout', function(Layout) {
 dolphyTest('#slot escape explicit', 'Layout', function(Layout) {
   var L1 = Layout({tag:'div', content:{slot:'content', escape:true}});
   var L2 = Layout({use:L1, content:'<*&34abc>'});
-  assert.strictEqual(L2(), '<div>\n&lt;*&amp;34abc&gt;\n</div>');
+  assert.strictEqual(L2(), '<div>&lt;*&amp;34abc&gt;</div>');
 });
 
 dolphyTest('#slot escape implicit', 'Layout', function(Layout) {
@@ -589,12 +589,24 @@ dolphyTest('#slot escape implicit', 'Layout', function(Layout) {
 dolphyTest('#slot no escape explicit', 'Layout', function(Layout) {
   var L1 = Layout({tag:'div', content:{slot:'content', escape:false}});
   var L2 = Layout({use:L1, content:'<*&34abc>'});
-  assert.strictEqual(L2(), '<div>\n<*&34abc>\n</div>');
+  assert.strictEqual(L2(), '<div><*&34abc></div>');
 });
 
 dolphyTest('#slot no escape implicit', 'Layout', function(Layout) {
   var L1 = Layout({tag:'div', content:{slot:'content'}});
   var L2 = Layout({use:L1, content:'<*&34abc>'});
-  assert.strictEqual(L2(), '<div>\n<*&34abc>\n</div>');
+  assert.strictEqual(L2(), '<div><*&34abc></div>');
+});
+
+dolphyTest('#multi slot', 'Layout', function(Layout) {
+  var L1 = Layout({tag:'a', attr:{href:{slot:'href'}}, content:{slot:'href'}});
+  var L2 = Layout({use:L1, href:'http://www.pandora.com/'});
+  assert.strictEqual(L2(), '<a href="http://www.pandora.com/">http://www.pandora.com/</a>');
+});
+
+dolphyTest('#omitted slot no default', 'Layout', function(Layout) {
+  var L1 = Layout({tag:'div', content:{slot:'content'}});
+  var L2 = Layout({use:L1});
+  assert.strictEqual(L2(), '<div></div>');
 });
 

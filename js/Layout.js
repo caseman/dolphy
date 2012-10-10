@@ -216,7 +216,7 @@ define(function() {
 
   Layout.addHandler([
 
-    function tag(node) {
+    function tag(node, options) {
       var condition, varName, parts;
       if (node.omitEmpty && node.content) {
         varName = this.localVarName();
@@ -236,16 +236,17 @@ define(function() {
       }
       parts.push('">"');
       if (node.content) {
-        parts.push('"\\n"');
         if (node.omitEmpty) {
           parts.push(varName);
         } else {
           parts.push(this.compile(node.content, {sep: '\n'}));
         }
-        parts.push('"\\n"');
       }
       if (node.content || !(node.tag in selfClosingTags)) {
         parts.push('"</' + node.tag + '>"');
+      }
+      if (!options.sep) {
+        parts.push('\\n');
       }
       if (condition) {
         return condition + join(parts) + '):""))';
@@ -397,14 +398,17 @@ define(function() {
         name;
       for (var i = 0; i < slots.length; i++) {
         name = slots[i].slot;
-        exists[name] = true;
-        res += 'var _slot$' + name + '='; 
-        if (name in node) {
-          res += this.compile(node[name], slots[i].options) + ';';
-        } else if (slots[i].required) {
+        if (!exists[name]) {
+          exists[name] = true;
+          res += 'var _slot$' + name + '='; 
+          if (name in node) {
+            res += this.compile(node[name], slots[i].options) + ';';
+          } else {
+            res += '"";';
+          }
+        }
+        if (slots[i].required && !(name in node)) {
           throw Error('No value supplied for required slot "' + name + '"');
-        } else {
-          res += '"";';
         }
       }
       for (name in node) {
