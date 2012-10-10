@@ -536,7 +536,7 @@ dolphyTest('#filter last', 'Layout', function(Layout) {
   assert.strictEqual(L(), '1\n2\nlast 2');
 });
 
-suite('slot/use handler');
+suite('slot/use handlers');
 
 dolphyTest('#basic slot', 'Layout', function(Layout) {
   var L1 = Layout({tag:'div', id:{slot:'id'}, cls:{slot:'cls'}, content:{slot:'stuff'}});
