@@ -69,7 +69,7 @@ define(function() {
         if (node.toString !== _objToString) {
           return stringify(node.toString());
         } else {
-          throw new Error('No handler for: ' + stringify(node));
+          throw Error('No handler for: ' + stringify(node));
         }
       } else {
         return stringify(node + '');
@@ -85,7 +85,7 @@ define(function() {
     this.validateNode = function(node, allowed) {
       for (var key in node) {
         if (!allowed[key]) {
-          throw new Error('"' + key + '" not allowed in ' + stringify(node));
+          throw Error('"' + key + '" not allowed in ' + stringify(node));
         }
       }
     }
@@ -119,7 +119,7 @@ define(function() {
         src = 'var ' + this.vars.join(',') + ';\n' + src;
       }
     } else {
-      throw new Error('Layout definition must be an Array or plain Object');
+      throw Error('Layout definition must be an Array or plain Object');
     }
   }
 
