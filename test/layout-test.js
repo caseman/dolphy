@@ -623,3 +623,9 @@ dolphyTest('#slot default and required', 'Layout', function(Layout) {
   }, /default and required/);
 });
 
+dolphyTest('#slot omit empty', 'Layout', function(Layout) {
+  var L = Layout({tag:'div', id:{slot:'id', omitEmpty:true}});
+  assert.strictEqual(Layout({use:L})(), '<div></div>');
+  assert.strictEqual(Layout({use:L, id:'mythingy'})(), '<div id="mythingy"></div>');
+});
+

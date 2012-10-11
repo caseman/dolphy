@@ -377,7 +377,8 @@ define(function() {
       var 
         tmpl = '',
         slotVar = '_slot$' + node.slot;
-      this.validateNode(node, {slot: true, escape: true, required: true, default:true});
+      this.validateNode(node, 
+        {slot: true, escape: true, required: true, default:true, omitEmpty:true});
       if (node.default && node.required) {
         throw Error('Slot cannot have both default and required "' + stringify(node) + '"');
       }
