@@ -69,7 +69,7 @@ define(function() {
         if (node.toString !== _objToString) {
           return stringify(node.toString());
         } else {
-          throw Error('No handler for: ' + stringify(node));
+          throw new Error('No handler for: ' + stringify(node));
         }
       } else {
         return stringify(node + '');
@@ -85,7 +85,7 @@ define(function() {
     this.validateNode = function(node, allowed) {
       for (var key in node) {
         if (!allowed[key]) {
-          throw Error('"' + key + '" not allowed in ' + stringify(node));
+          throw new Error('"' + key + '" not allowed in ' + stringify(node));
         }
       }
     }
@@ -119,7 +119,7 @@ define(function() {
         src = 'var ' + this.vars.join(',') + ';\n' + src;
       }
     } else {
-      throw Error('Layout definition must be an Array or plain Object');
+      throw new Error('Layout definition must be an Array or plain Object');
     }
   }
 
@@ -237,12 +237,12 @@ define(function() {
           }
         }
         if (slots[i].required && !(name in node)) {
-          throw Error('No value supplied for required slot "' + name + '"');
+          throw new Error('No value supplied for required slot "' + name + '"');
         }
       }
       for (name in node) {
         if (name !== 'use' && !exists[name]) {
-          throw Error('No slot named "' + name + '"');
+          throw new Error('No slot named "' + name + '"');
         }
       }
       res += node.use.src + '})()';
@@ -256,7 +256,7 @@ define(function() {
       this.validateNode(node, 
         {slot: true, escape: true, required: true, default:true, omitEmpty:true});
       if (node.default && node.required) {
-        throw Error('Slot cannot have both default and required "' + stringify(node) + '"');
+        throw new Error('Slot cannot have both default and required "' + stringify(node) + '"');
       }
       if (!this.metadata.slots) this.metadata.slots = [];
       this.metadata.slots.push(node);
