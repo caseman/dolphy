@@ -216,6 +216,59 @@ define(function() {
 
   Layout.addHandler([
 
+    function use(node, options) {
+      var 
+        slotOptions = node.use.slotOptions,
+        res = '(function(){',
+        slots = node.use.slots || [],
+        exists = {},
+        name;
+      for (var i = 0; i < slots.length; i++) {
+        name = slots[i].slot;
+        if (!exists[name]) {
+          exists[name] = true;
+          res += 'var _slot$' + name + '='; 
+          if (name in node) {
+            res += this.compile(node[name], slots[i].options) + ';';
+          } else if ('default' in slots[i]) {
+            res += this.compile(slots[i].default, slots[i].options) + ';';
+          } else {
+            res += '"";';
+          }
+        }
+        if (slots[i].required && !(name in node)) {
+          throw Error('No value supplied for required slot "' + name + '"');
+        }
+      }
+      for (name in node) {
+        if (name !== 'use' && !exists[name]) {
+          throw Error('No slot named "' + name + '"');
+        }
+      }
+      res += node.use.src + '})()';
+      return res;
+    },
+
+    function slot(node, options) {
+      var 
+        tmpl = '',
+        slotVar = '_slot$' + node.slot;
+      this.validateNode(node, 
+        {slot: true, escape: true, required: true, default:true, omitEmpty:true});
+      if (node.default && node.required) {
+        throw Error('Slot cannot have both default and required "' + stringify(node) + '"');
+      }
+      if (!this.metadata.slots) this.metadata.slots = [];
+      this.metadata.slots.push(node);
+      node.options = options;
+      if (typeof node.escape !== 'undefined' ? node.escape : options.escape) {
+        this.utilFunctions['$escape'] = $escape;
+        return '$escape(' + slotVar + ')';
+      } else {
+        return slotVar;
+      }
+    },
+
     function tag(node, options) {
       var condition, varName, parts;
       if (node.omitEmpty && node.content) {
@@ -371,59 +424,6 @@ define(function() {
         filterExpr: filterExpr,
         lastIndexVar: lastIndexVar,
       });
-    },
-
-    function slot(node, options) {
-      var 
-        tmpl = '',
-        slotVar = '_slot$' + node.slot;
-      this.validateNode(node, 
-        {slot: true, escape: true, required: true, default:true, omitEmpty:true});
-      if (node.default && node.required) {
-        throw Error('Slot cannot have both default and required "' + stringify(node) + '"');
-      }
-      if (!this.metadata.slots) this.metadata.slots = [];
-      this.metadata.slots.push(node);
-      node.options = options;
-      if (typeof node.escape !== 'undefined' ? node.escape : options.escape) {
-        this.utilFunctions['$escape'] = $escape;
-        return '$escape(' + slotVar + ')';
-      } else {
-        return slotVar;
-      }
-    },
-
-    function use(node, options) {
-      var 
-        slotOptions = node.use.slotOptions,
-        res = '(function(){',
-        slots = node.use.slots || [],
-        exists = {},
-        name;
-      for (var i = 0; i < slots.length; i++) {
-        name = slots[i].slot;
-        if (!exists[name]) {
-          exists[name] = true;
-          res += 'var _slot$' + name + '='; 
-          if (name in node) {
-            res += this.compile(node[name], slots[i].options) + ';';
-          } else if ('default' in slots[i]) {
-            res += this.compile(slots[i].default, slots[i].options) + ';';
-          } else {
-            res += '"";';
-          }
-        }
-        if (slots[i].required && !(name in node)) {
-          throw Error('No value supplied for required slot "' + name + '"');
-        }
-      }
-      for (name in node) {
-        if (name !== 'use' && !exists[name]) {
-          throw Error('No slot named "' + name + '"');
-        }
-      }
-      res += node.use.src + '})()';
-      return res;
     }
   ]);
 

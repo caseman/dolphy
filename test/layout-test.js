@@ -545,6 +545,12 @@ dolphyTest('#basic slot', 'Layout', function(Layout) {
   assert.strictEqual(L2(), '<div id="mememe" class="foo bar spam"><p>Woo</p></div>');
 });
 
+dolphyTest('#slot precidence', 'Layout', function(Layout) {
+  var L1 = Layout([{slot:'tag'}, {slot:'expr'}, {slot:'test'}, {slot:'each'}, {slot:'slot'}]);
+  var L2 = Layout({use:L1, tag:'TAG', expr:'EXPR', test:'TEST', each:'EACH', slot:'SLOT'})
+  assert.strictEqual(L2(), 'TAG\nEXPR\nTEST\nEACH\nSLOT');
+});
+
 dolphyTest('#slot metadata', 'Layout', function(Layout) {
   var L = Layout({tag:'div', id:{slot:'id'}, cls:{slot:'cls', escape:true}, 
     content:{slot:'content', required:true}});
