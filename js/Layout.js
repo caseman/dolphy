@@ -1,4 +1,4 @@
-define(function() {
+;(function() {
   'use strict';
   var 
     isArray = Array.isArray,
@@ -427,5 +427,11 @@ define(function() {
     }
   ]);
 
-  return Layout;
-});
+  if (typeof define === 'function' && define.amd) {
+    // AMD Loader
+    define(function() {return Layout});
+  } else if (typeof require === 'function' && module) {
+    // CommonJS/node
+    module.exports = Layout;
+  }
+})();

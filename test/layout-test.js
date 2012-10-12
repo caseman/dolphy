@@ -16,7 +16,12 @@ var dolphyTest = function(name, moduleName, func) {
 
 suite('layout constructor');
 
-dolphyTest('#Constructor func', 'Layout', function(Layout) {
+test('#Constructor func CommonJS', function() {
+  var Layout = require('../js/Layout.js');
+  assert.isFunction(Layout);
+});
+
+dolphyTest('#Constructor func AMD', 'Layout', function(Layout) {
   assert.isFunction(Layout);
 });
 
