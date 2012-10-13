@@ -20,7 +20,7 @@
     "chai": "1.2.x"
   }
   , "scripts": {
-      "dtest": "./node_modules/.bin/mocha --reporter spec --no-colors --ui qunit --debug-brk",
+      "dtest": "node debug ./node_modules/.bin/mocha --reporter spec --no-colors --ui qunit",
       "test": "./node_modules/.bin/mocha --reporter spec --no-colors --ui qunit"
   }
 }
